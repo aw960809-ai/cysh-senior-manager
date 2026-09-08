@@ -1,0 +1,38 @@
+name: Deploy Web Push Worker
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Install Worker dependencies
+        working-directory: push-worker
+        run: npm install --no-audit --no-fund
+      - name: Deploy Worker and Durable Object
+        working-directory: push-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy
+      - name: Configure VAPID secrets
+        working-directory: push-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          VAPID_PUBLIC: ${{ secrets.VAPID_SERVER_PUBLIC_KEY }}
+          VAPID_PRIVATE: ${{ secrets.VAPID_SERVER_PRIVATE_KEY }}
+        run: |
+          test -n "$VAPID_PUBLIC"
+          test -n "$VAPID_PRIVATE"
+          printf '%s' "$VAPID_PUBLIC" | npx wrangler secret put VAPID_SERVER_PUBLIC_KEY
+          printf '%s' "$VAPID_PRIVATE" | npx wrangler secret put VAPID_SERVER_PRIVATE_KEY

@@ -1,0 +1,16 @@
+{
+  "name": "cysh-senior-manager-push-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "vapid": "node generate-vapid.mjs"
+  },
+  "dependencies": {
+    "@block65/webcrypto-web-push": "^2.0.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.35.0"
+  }
+}

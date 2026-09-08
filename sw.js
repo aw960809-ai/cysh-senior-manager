@@ -1,4 +1,4 @@
-const CACHE_NAME='cysh-manager-v9.9-shell';
+const CACHE_NAME='cysh-manager-v10.0-shell';
 const SHELL=['./','./index.html','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting()));

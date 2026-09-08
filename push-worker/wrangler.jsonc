@@ -1,0 +1,24 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cysh-senior-manager-push",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-08",
+  "vars": {
+    "ALLOWED_ORIGIN": "https://aw960809-ai.github.io",
+    "VAPID_SUBJECT": "https://aw960809-ai.github.io/cysh-senior-manager/"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "PUSH_DEVICES",
+        "class_name": "PushDevice"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["PushDevice"]
+    }
+  ]
+}
