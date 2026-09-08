@@ -429,6 +429,27 @@ input[type="checkbox"],input[type="radio"]{accent-color:var(--green,#315f50)!imp
   .home-action-wide-v104{grid-column:auto!important}
 }
 
+
+/* CYSH HOME BOTTOM SPACING V10.4.1 */
+/* 只修首頁底部固定導覽列遮住內容的問題 */
+.home-page-v104,
+.home-today-section-v104{
+  padding-bottom:calc(148px + env(safe-area-inset-bottom))!important;
+  box-sizing:border-box!important;
+}
+
+/* 首頁統計區最後一張卡片也預留安全距離 */
+.home-stats-grid-v104{
+  margin-bottom:18px!important;
+}
+
+@media(max-width:620px){
+  .home-page-v104,
+  .home-today-section-v104{
+    padding-bottom:calc(156px + env(safe-area-inset-bottom))!important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -498,7 +519,7 @@ const CYSH_PARSER_VERSION=8;
 const SOURCE_COOLDOWN_MS=10*60*1000, RATE_LIMIT_COOLDOWN_MS=20*60*1000;
 const REFRESH_TOTAL_TIMEOUT_MS=45*1000, SOURCE_TIMEOUT_MS={cysh:18*1000,youth:12*1000,moe:10*1000};
 const REFRESH_SLOW_HINT_MS=15*1000, REFRESH_DEEP_HINT_MS=30*1000;
-const APP_BUILD='v10.4.0-20260908-home-stats-interaction';
+const APP_BUILD='v10.4.1-20260908-home-bottom-spacing';
 const REMOTE_PUSH_HORIZON_DAYS=35;
 let remotePushSyncTimer=null,remotePushSyncBusy=false,remotePushReady=false;
 const TRIAL_START='2026-09-01',TRIAL_END='2027-08-31';
