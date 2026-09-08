@@ -37,6 +37,22 @@ button,input,select,textarea{font:inherit}.app{max-width:1240px;margin:auto;padd
 @media(max-width:620px){.diag-pipeline{grid-template-columns:repeat(3,minmax(0,1fr))}.app{padding:10px 8px 102px}.topbar{align-items:flex-start}.top-actions{display:none}.hero h2{font-size:24px}.hero-main{padding:17px}.stats{gap:6px}.stat{padding:11px}.stat .value{font-size:19px}.section-head{align-items:flex-start}.section-head .section-actions{width:auto}.calendar-wrap{padding:8px;border-radius:16px}.cal-head{grid-template-columns:38px minmax(0,1fr) 38px auto;gap:4px;margin-bottom:7px}.cal-head h3{font-size:14px;white-space:nowrap}.cal-head .btn{min-width:0;padding:8px 6px;border-radius:10px;font-size:10px}.cal-head #todayBtn{padding-left:8px;padding-right:8px}.cal-grid{grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}.dow{font-size:8px;padding:4px 0}.dow .dow-prefix{display:none}.day{height:78px;min-height:78px;padding:3px;border-radius:8px}.day b{font-size:9px}.event-dot{font-size:6.5px;margin-top:2px;padding:3px 2px;border-radius:5px;text-align:center;line-height:1.15}.event-dot .desktop-label{display:none}.event-dot .mobile-label{display:inline}.calendar-hint{display:block;margin-top:7px;font-size:8px}.cal-legend{margin-bottom:4px;gap:5px}.legend-item{gap:3px}.bottom-nav{bottom:7px}.form-grid{grid-template-columns:1fr}.form-grid .full{grid-column:auto}.goal-head{gap:6px;padding:9px 7px}.goal-tools .btn{padding:5px 6px}.progress{width:52px}.meta{grid-template-columns:1fr}.scoreline{grid-template-columns:repeat(5,1fr)}}
 
 .pwa-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.pwa-state{padding:11px;border:1px solid var(--line);border-radius:13px;background:#fbfcfa}.pwa-state span{display:block;color:var(--muted);font-size:9px;margin-bottom:3px}.pwa-state b{font-size:11px}.setting-switch{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}.setting-switch:last-child{border-bottom:0}.setting-switch label{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800}.setting-switch small{display:block;color:var(--muted);font-size:9px;font-weight:500;margin-top:2px}.notify-options{margin-top:9px;border-top:1px solid var(--line)}.notify-leads{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}.notify-leads label{font-size:9px}.notify-log{margin-top:8px}.notify-log .history-item{padding:7px 0}.install-note{font-size:9px;color:var(--muted);line-height:1.55;margin-top:7px}@media(max-width:620px){.pwa-grid{grid-template-columns:1fr}.setting-switch{align-items:flex-start}}
+
+/* CYSH YOUTH V7 UI HOTFIX */
+.archive-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.archive-card-head h3{margin:0 0 5px}
+.archive-card-head p{margin:0}
+.archive-summary{font-size:9px;color:var(--muted);margin-top:8px}
+.archive-list.collapsed{display:none}
+.archive-list .history-item b{line-height:1.45;word-break:break-word}
+.archive-list .history-item span{line-height:1.5;word-break:break-word}
+@media(max-width:620px){
+ .archive-card-head{display:grid;grid-template-columns:1fr auto;gap:8px}
+ .setting-switch:has(#notifyQuietStart){display:grid;grid-template-columns:1fr;gap:8px}
+ .setting-switch:has(#notifyQuietStart)>div:last-child{display:grid!important;grid-template-columns:1fr 1fr;gap:8px!important;width:100%}
+ .setting-switch:has(#notifyQuietStart) input[type="time"]{width:100%;min-width:0}
+}
+
 </style>
 </head>
 <body>
@@ -87,7 +103,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1240px;margin:auto;padd
   <div class="card setting-card"><h3>通知中心</h3><p>PWA 本機提醒與 Web Push 共用同一套設定；完成背景推播連接後，即使 App 完全關閉，也能由推播服務在排定時間喚醒 Service Worker 顯示通知。</p><div class="pwa-grid"><div class="pwa-state"><span>通知權限</span><b id="notifyPermissionState">檢查中</b></div><div class="pwa-state"><span>上次提醒檢查</span><b id="notifyLastCheck">尚未檢查</b></div></div><div class="actions"><button class="btn" id="requestNotifyPermission">允許通知</button><button class="btn secondary" id="testNotification">測試通知</button><button class="btn ghost" id="checkNotificationsNow">立即檢查提醒</button></div><div class="notice" style="margin-top:10px"><strong>App 關閉後背景推播</strong><br><span>後端只保存裝置推播訂閱、排定時間與摘要型提醒；不會上傳完整目標內容、完成紀錄或 LocalStorage 資料。</span><div class="pwa-grid" style="margin-top:9px"><div class="pwa-state"><span>Web Push</span><b id="remotePushState">尚未連接</b></div><div class="pwa-state"><span>上次排程同步</span><b id="remotePushLastSync">尚未同步</b></div></div><div class="field" style="margin-top:9px"><label>Cloudflare Worker 網址</label><input id="pushWorkerUrl" inputmode="url" placeholder="https://cysh-push.你的帳號.workers.dev"/></div><div class="actions" style="margin-top:8px"><button class="btn" id="connectWebPush">連接背景推播</button><button class="btn secondary" id="syncWebPush">同步未來提醒</button><button class="btn ghost" id="testWebPush">測試背景推播</button><button class="btn danger" id="disconnectWebPush">解除背景推播</button></div><small id="remotePushHint" style="display:block;margin-top:7px;color:var(--muted)">尚未設定後端。</small></div><div class="notify-options"><div class="setting-switch"><div><label><input type="checkbox" id="notifyMaster"/> 啟用提醒</label><small>總開關；關閉後不主動顯示任何提醒。</small></div></div><div class="setting-switch"><div><label><input type="checkbox" id="notifyTodayTasks"/> 今日待辦</label><small>到每日提醒時間後，提醒尚未完成的第四層任務。</small></div><input id="notifyDailyTime" type="time" value="18:30"/></div><div class="setting-switch"><div><label><input type="checkbox" id="notifyOverdue"/> 近期漏做任務</label><small>檢查過去 3 日有排程但未完成的任務。</small></div></div><div class="setting-switch"><div><label><input type="checkbox" id="notifySubgoal"/> 子任務終期</label><small>依下方提前天數提醒第三層子任務。</small></div></div><div class="setting-switch"><div><label><input type="checkbox" id="notifyActivity"/> 活動截止</label><small>只提醒仍在候選區且未略過／未轉計畫的活動。</small></div></div><div class="setting-switch"><div><label><input type="checkbox" id="notifyScholarship"/> 獎助截止</label><small>只提醒仍在候選區且未略過／未轉計畫的獎助。</small></div></div><div class="setting-switch"><div><label><input type="checkbox" id="notifyCalendar"/> 行事曆期限</label><small>個人期限與固定升學截止。</small></div></div><div class="setting-switch"><div><b style="font-size:11px">截止提前提醒</b><div class="notify-leads"><label class="chip"><input type="checkbox" data-notify-lead="0"/> 當日</label><label class="chip"><input type="checkbox" data-notify-lead="1"/> 1 天</label><label class="chip"><input type="checkbox" data-notify-lead="3"/> 3 天</label><label class="chip"><input type="checkbox" data-notify-lead="7"/> 7 天</label></div></div></div><div class="setting-switch"><div><b style="font-size:11px">勿擾時段</b><small>非手動測試時，在此時段內不發通知，等下一次可檢查時再提醒。</small></div><div style="display:flex;gap:5px"><input id="notifyQuietStart" type="time" value="22:30"/><input id="notifyQuietEnd" type="time" value="07:00"/></div></div></div><div class="notify-log" id="notificationLog"></div></div>
   <div class="card setting-card"><h3>刪除歷程</h3><p>已刪除項目不計入分析；歷程可獨立清除。</p><div id="deletedHistory"></div><div class="actions"><button class="btn ghost" id="clearHistory">清除刪除歷程</button></div></div>
   <div class="card setting-card"><h3>外部機會更新引擎</h3><p>每個來源拆解顯示：原始公告 → 機會辨識 → 高三資格 → 未截止有效 → 最終進雷達；另有 429 限流保護、來源節流、45 秒前端上限與快取保留。</p><div class="notice" style="margin:8px 0"><strong id="engineVersion"></strong><br><span>若載入舊版診斷，會先標記為舊資料，再只重抓需要升級的來源。</span></div><div id="externalStatus"></div><div class="actions"><button class="btn" id="refreshSourcesSystem">立即執行完整更新</button><button class="btn secondary" id="refreshCyshOnly">只更新嘉中</button></div></div>
-  <div class="card setting-card"><h3>機會汰除歷程</h3><p>截止或失效的候選不直接消失，保留來源與汰除原因；不再計入首頁、行事曆與適配統計。</p><div id="opportunityArchive"></div></div>
+  <div class="card setting-card archive-card"><div class="archive-card-head"><div><h3>機會汰除歷程</h3><p>截止或失效的候選保留來源與汰除原因；最多保存 200 筆，不再計入首頁、行事曆與適配統計。</p></div><button class="btn ghost small" type="button" id="toggleOpportunityArchive" onclick="toggleOpportunityArchive()">查看歷程</button></div><div class="archive-summary" id="opportunityArchiveSummary"></div><div id="opportunityArchive" class="archive-list collapsed"></div></div>
   <div class="card setting-card"><h3>資料版本</h3><p>結構版本用於未來 migration，避免更新 HTML 時資料消失。</p><div class="kv"><span>Schema</span><b id="schemaVersion"></b></div><div class="kv"><span>儲存鍵</span><b>cysh-senior-manager-v2</b></div></div>
  </div>
 </section>
@@ -102,11 +118,11 @@ button,input,select,textarea{font:inherit}.app{max-width:1240px;margin:auto;padd
 <script>
 const SCHEMA_VERSION=11, STORE_KEY='cysh-senior-manager-v2';
 const SAFETY_BACKUP_KEY=STORE_KEY+'-safety-backup';
-const CYSH_PARSER_VERSION=6;
+const CYSH_PARSER_VERSION=7;
 const SOURCE_COOLDOWN_MS=10*60*1000, RATE_LIMIT_COOLDOWN_MS=20*60*1000;
 const REFRESH_TOTAL_TIMEOUT_MS=45*1000, SOURCE_TIMEOUT_MS={cysh:18*1000,youth:12*1000,moe:10*1000};
 const REFRESH_SLOW_HINT_MS=15*1000, REFRESH_DEEP_HINT_MS=30*1000;
-const APP_BUILD='v10.1.2-20260908-auto-update-first-run-fix';
+const APP_BUILD='v10.2.0-20260908-youth-v7-ui';
 const REMOTE_PUSH_HORIZON_DAYS=35;
 let remotePushSyncTimer=null,remotePushSyncBusy=false,remotePushReady=false;
 const TRIAL_START='2026-09-01',TRIAL_END='2027-08-31';
@@ -438,103 +454,75 @@ async function parseCyshSource(source,text,options={}){
 }
 function parseMoeSource(source,text){const has=/獎學金/.test(text),diag={rawCount:has?1:0,identifiedCount:has?1:0};if(!has)return finalizeDiagnostics([],diag);const roc=(text.match(/(\d{3})學年度/)||[])[1],year=roc?Number(roc)+1911:Number(TODAY.slice(0,4)),deadline=extractDeadline(text,`${year}-08-01`);const title=roc?`教育部接受捐助獎學基金會${roc}學年度獎學金`:'教育部接受捐助獎學基金會獎學金';const item=normalizeOpportunity({type:'scholarship',title,org:'教育部接受捐助獎學基金會',region:'全國',deadline,amount:extractAmount(text),eligibility:extractEligibility(text),goal:'就學經濟支持／學業獎勵',reason:'由教育部獎學金公告資訊網自動更新；實際校內收件日仍需依嘉中公告。',url:source.url,sourceUrl:source.url,sourceId:source.id,sourceName:source.name,lastSeen:new Date().toISOString()});return finalizeDiagnostics([item],diag)}
 function parseYouthSource(source,text){
-const src=String(text||''),out=[],seen=new Set();
-let malformed=0,excluded=0;
-
-const youthClean=s=>cleanText(
-String(s||'')
-.replace(/!\[[^\]]*\]\([^)]+\)/g,' ')
-.replace(/\[([^\]]+)\]\([^)]+\)/g,' $1 ')
-.replace(/https?:\/\/\S+/g,' ')
-.replace(/\bImage(?:\s*\d+)?\b/gi,' ')
-.replace(/^\s*\d{1,2}\s+(?=\S)/,' ')
-);
-
-const deadlineRe=/申請期限\s*[:：]?\s*(20\d{2})[.\/-](\d{1,2})[.\/-](\d{1,2})\s*(?:[-~～至]\s*(20\d{2})[.\/-](\d{1,2})[.\/-](\d{1,2}))?/g;
-const matches=[...src.matchAll(deadlineRe)];
-
-for(const dm of matches){
-const deadline=dateLineToISODate(dm[4]||dm[1],dm[5]||dm[2],dm[6]||dm[3]);
-if(!deadline){malformed++;continue}
-
-const before=src.slice(Math.max(0,dm.index-1200),dm.index);
-const rawLinks=[...before.matchAll(/\[([^\]\n]{3,220})\]\(([^)\s]+)\)/g)]
-.filter(m=>{
-const prev=m.index>0?before[m.index-1]:'';
-const u=String(m[2]||'');
-return prev!=='!' &&
-!/\.(?:png|jpe?g|gif|webp|svg)(?:\?|$)/i.test(u) &&
-!/\/assets\/fallback|\/media\/doc/i.test(u);
-});
-
-let title='',org='',url=source.url;
-
-if(rawLinks.length){
-const lm=rawLinks[rawLinks.length-1];
-title=youthClean(lm[1]);
-url=absoluteSourceUrl(lm[2],source.url)||source.url;
-
-const tail=before.slice((lm.index||0)+lm[0].length);
-const orgCandidates=tail.split(/\n+/)
-.map(youthClean)
-.filter(v=>v &&
-v.length<=120 &&
-!/^(?:0|字級|顯示\d*筆|前往專案網站)$/i.test(v));
-
-if(orgCandidates.length)org=orgCandidates[orgCandidates.length-1];
-}
-
-if(!title){
-const prev=before.split(/\n+/)
-.map(youthClean)
-.filter(v=>v &&
-v.length<=220 &&
-!/^(?:0|字級|顯示\d*筆|申請期限)$/i.test(v));
-
-for(let i=prev.length-1;i>=0;i--){
-const v=prev[i];
-if(!org){org=v;continue}
-if(!title){title=v;break}
-}
-}
-
-if(!title){malformed++;continue}
-if(EXCLUDE_WORDS.test(title)){excluded++;continue}
-
-org=youthClean(org);
-if(!org || org===title)org='待確認';
-
-const key=title+'|'+deadline;
-if(seen.has(key))continue;
-seen.add(key);
-
-const context=[title,org].join(' ');
-const type=inferType(context)||'activity';
-
-out.push(normalizeOpportunity({
-type,
-title,
-org,
-region:inferRegion(context),
-deadline,
-eligibility:'青年資源；資格與申請期限待開啟官方來源確認',
-goal:inferGoal(context,type),
-reason:'由青年第一讚公開來源擷取；申請期限已解析，其他資格依官方頁面為準。',
-url,
-sourceUrl:url,
-sourceId:source.id,
-sourceName:source.name,
-lastSeen:new Date().toISOString()
-}));
-}
-
-return finalizeDiagnostics(out,{
-rawCount:matches.length,
-identifiedCount:out.length,
-excludedKeyword:excluded,
-parseErrors:malformed,
-deadlineParsed:out.filter(x=>x.deadline).length
-})
+ const src=String(text||''),out=[],seen=new Set();
+ let malformed=0,excluded=0,organizerParsed=0,categoryParsed=0;
+ const youthClean=s=>cleanText(
+  String(s||'')
+   .replace(/!\[[^\]]*\]\s*\([^)]+\)/g,' ')
+   .replace(/\[([^\]]+)\]\s*\([^)]+\)/g,' $1 ')
+   .replace(/https?:\/\/\S+/g,' ')
+   .replace(/\bImage(?:\s*\d+)?\b/gi,' ')
+   .replace(/^[\s*•·▪▫\-–—]*\d{1,2}\s+/,' ')
+ );
+ const contentLinkRe=/(?<!!)\[([^\]\n]{3,220})\]\s*\((https?:\/\/[^)\s]+)\)/g;
+ const deadlineRe=/申請期限\s*[:：]?\s*(20\d{2})[.\/-](\d{1,2})[.\/-](\d{1,2})\s*(?:[-~～至]\s*(20\d{2})[.\/-](\d{1,2})[.\/-](\d{1,2}))?/;
+ const categoryWords=/^(競賽|活動|獎補助金|獎學金|補助|津貼|貸款|研習|講座|營隊|徵件|志工|交流)$/;
+ const rows=src.split(/\n+/).map(x=>x.trim()).filter(x=>/申請期限\s*[:：]?/.test(x));
+ for(const row of rows){
+  const dm=row.match(deadlineRe);
+  if(!dm){malformed++;continue}
+  const deadline=dateLineToISODate(dm[4]||dm[1],dm[5]||dm[2],dm[6]||dm[3]);
+  if(!deadline){malformed++;continue}
+  const deadlineIndex=row.indexOf(dm[0]);
+  const before=row.slice(0,deadlineIndex);
+  const links=[...before.matchAll(contentLinkRe)].filter(m=>{
+   const title=youthClean(m[1]),url=String(m[2]||'');
+   return title&&!categoryWords.test(title)&&!/\/media\/(?:image|doc)|\/assets\/fallback/i.test(url);
+  });
+  const contentLinks=links.filter(m=>/\/subject\/content\//.test(String(m[2]||'')));
+  const lm=(contentLinks.length?contentLinks:links).at(-1);
+  if(!lm){malformed++;continue}
+  const title=youthClean(lm[1]);
+  if(!title){malformed++;continue}
+  if(EXCLUDE_WORDS.test(title)){excluded++;continue}
+  let url=String(lm[2]||source.url);
+  url=url.replace(/\/index\.php\/subject\/index\/0\/index\.php\/subject\/content\//,'/index.php/subject/content/');
+  url=absoluteSourceUrl(url,source.url)||source.url;
+  const titleEnd=(lm.index||0)+lm[0].length;
+  let org=youthClean(before.slice(titleEnd));
+  org=org.replace(/^(?:主辦|提供|辦理單位)\s*[:：]?\s*/,'').trim();
+  if(org&&org!==title)organizerParsed++;else org='待確認';
+  const after=row.slice(deadlineIndex+dm[0].length);
+  const cm=after.match(/\[([^\]\n]{1,40})\]\s*\(([^)]+)\)/);
+  const category=youthClean(cm?.[1]||'');
+  if(category)categoryParsed++;
+  const typeText=[title,org,category].join(' ');
+  let type;
+  if(/競賽|活動|研習|講座|營隊|徵件|志工|交流|比賽|提案/.test(typeText))type='activity';
+  else if(/獎補助金|獎學金|助學金|補助|津貼|貸款/.test(typeText))type='scholarship';
+  else type=inferType(typeText)||'activity';
+  const key=title+'|'+deadline;
+  if(seen.has(key))continue;
+  seen.add(key);
+  out.push(normalizeOpportunity({
+   type,title,org,region:inferRegion(typeText),deadline,
+   eligibility:'青年資源；資格與申請條件請開啟官方來源確認',
+   goal:inferGoal(typeText,type),
+   reason:`由青年第一讚公開來源單列解析（${category||'類型待確認'}）；申請期限已解析，其他資格依官方頁面為準。`,
+   url,sourceUrl:url,sourceId:source.id,sourceName:source.name,
+   lastSeen:new Date().toISOString()
+  }));
+ }
+ return finalizeDiagnostics(out,{
+  rawCount:rows.length,
+  identifiedCount:out.length,
+  excludedKeyword:excluded,
+  parseErrors:malformed,
+  deadlineParsed:out.filter(x=>x.deadline).length,
+  organizerParsed,
+  categoryParsed,
+  parserVersion:CYSH_PARSER_VERSION
+ })
 }
 
 async function pullSource(source,options={}){const started=Date.now();try{const remaining=Math.max(5000,(Number(options.stopAt)||Infinity)-Date.now()),topTimeout=Math.min(15000,Number.isFinite(remaining)?remaining:15000);const text=await fetchReaderRetry(source.url,topTimeout,source.parser==='youth'?2:3);const parsed=source.parser==='cysh'?await parseCyshSource(source,text,options):source.parser==='moe'?parseMoeSource(source,text):parseYouthSource(source,text);const items=(parsed.items||[]).filter(o=>o.title&&o.type);const diagnostics={...(parsed.diagnostics||{}),finalCount:items.length};return{ok:true,source,items,diagnostics,ms:Date.now()-started}}catch(error){return{ok:false,rateLimited:isRateLimitError(error),source,items:[],diagnostics:{rawCount:0,identifiedCount:0,eligibilityPass:0,eligibilityReview:0,eligibilityRejected:0,unexpiredCount:0,expiredCount:0,noDeadlineCount:0,finalCount:0,excludedKeyword:0,notOpportunity:0,parseErrors:1},error:String(error?.message||error),ms:Date.now()-started}}}
@@ -708,7 +696,43 @@ function renderDataProtectionState(){const raw=localStorage.getItem(SAFETY_BACKU
 function renderNotificationCenter(){const st=DB.notificationSettings||defaultNotificationSettings(),ns=DB.notificationState||defaultNotificationState(),perm=('Notification' in window)?Notification.permission:'unsupported';const map={notifyMaster:'enabled',notifyTodayTasks:'todayTasks',notifyOverdue:'overdue',notifySubgoal:'subgoalDeadline',notifyActivity:'activityDeadline',notifyScholarship:'scholarshipDeadline',notifyCalendar:'calendarDeadline'};Object.entries(map).forEach(([id,key])=>{const el=$('#'+id);if(el)el.checked=!!st[key]});if($('#notifyDailyTime'))$('#notifyDailyTime').value=st.dailyTime||'18:30';if($('#notifyQuietStart'))$('#notifyQuietStart').value=st.quietStart||'22:30';if($('#notifyQuietEnd'))$('#notifyQuietEnd').value=st.quietEnd||'07:00';$$('[data-notify-lead]').forEach(x=>x.checked=(st.leadDays||[]).includes(Number(x.dataset.notifyLead)));if($('#notifyPermissionState'))$('#notifyPermissionState').textContent=notificationPermissionText();if($('#notifyLastCheck'))$('#notifyLastCheck').textContent=ns.lastCheck?new Date(ns.lastCheck).toLocaleString('zh-TW'):'尚未檢查';if($('#requestNotifyPermission')){$('#requestNotifyPermission').disabled=perm==='unsupported'||perm==='granted';$('#requestNotifyPermission').textContent=perm==='granted'?'通知已允許':perm==='unsupported'?'不支援通知':'允許通知'}if($('#testNotification'))$('#testNotification').disabled=perm!=='granted';if($('#notificationLog'))$('#notificationLog').innerHTML=ns.log?.length?ns.log.slice(0,6).map(x=>`<div class="history-item"><div><b>${esc(x.title)}</b><span>${new Date(x.at).toLocaleString('zh-TW')}｜${esc(x.body)}</span></div></div>`).join(''):'<div class="empty">尚無通知紀錄。</div>';const rp={...defaultRemotePushState(),...(ns.remote||{})};if($('#pushWorkerUrl')&&document.activeElement!==$('#pushWorkerUrl'))$('#pushWorkerUrl').value=rp.workerUrl||'';if($('#remotePushState'))$('#remotePushState').textContent=rp.subscribed?'已連接':rp.workerUrl?'待連接':'尚未連接';if($('#remotePushLastSync'))$('#remotePushLastSync').textContent=rp.lastSync?new Date(rp.lastSync).toLocaleString('zh-TW'):'尚未同步';if($('#remotePushHint'))$('#remotePushHint').textContent=rp.lastError?`最近錯誤：${rp.lastError}`:(rp.subscribed?`後端已保存 ${rp.jobCount||0} 則未來提醒；完整目標資料仍只在本機。`:'部署 Cloudflare Worker 後貼上網址，再按「連接背景推播」。');if($('#syncWebPush'))$('#syncWebPush').disabled=!rp.subscribed;if($('#testWebPush'))$('#testWebPush').disabled=!rp.subscribed;if($('#disconnectWebPush'))$('#disconnectWebPush').disabled=!rp.subscribed&&!rp.workerUrl}
 async function initPWA(){if('serviceWorker' in navigator&&['http:','https:'].includes(location.protocol)){try{const reg=await navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'});reg.update().catch(()=>{});navigator.serviceWorker.addEventListener('message',e=>{if(e.data?.type==='NAVIGATE'&&e.data.page)go(e.data.page)});renderPWAInstallState()}catch(e){console.warn('SW register failed',e)}}renderPWAInstallState();renderStorageState();renderDataProtectionState();renderNotificationCenter();remotePushReady=true;setTimeout(()=>syncRemotePushSchedule(false),2400)}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;renderPWAInstallState()});window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;renderPWAInstallState();toast('應用程式已安裝')});
-function renderSystem(){const hosted=['http:','https:'].includes(String(location.protocol||'').toLowerCase()),webPushReady=!!DB.notificationState?.remote?.subscribed;const deployLabel=hosted?'網站版｜背景排程可啟用':'本機預覽｜背景排程未啟用';const dm=$('#deployModeText');if(dm)dm.textContent=deployLabel;$('#buildStamp').textContent=`版本 ${APP_BUILD}｜Schema v${SCHEMA_VERSION}｜PWA v3 自動更新｜通知中心 v2｜Web Push v1｜嘉中解析器 v${CYSH_PARSER_VERSION}｜前端 45 秒上限`;if($('#engineVersion'))$('#engineVersion').textContent=`目前引擎：${APP_BUILD}｜嘉中 Parser v${CYSH_PARSER_VERSION}`;const status=[['四級目標 CRUD','可運作'],['排程與今日待辦','可運作'],['完成紀錄／進度回推','可運作'],['子任務時間邊界／行事曆連動','可運作'],['活動／獎助轉計畫','可運作'],['外部抓取／更新／去重／汰除','可運作'],['抓取診斷／排除原因','可運作'],['備份／匯入／刪除歷程','可運作'],['PWA 安裝／資料保全','可運作'],['通知中心／App 活動中提醒','可運作'],['Web Push／App 關閉後提醒',webPushReady?'可運作':'需連接後端']];$('#coreStatus').innerHTML=status.map(([a,b])=>`<div class="source-row"><div class="source-dot"></div><div class="source-main"><b>${a}</b><span>${a.includes('外部')||a.includes('抓取')?'公開來源＋本機快取':'前端本機資料'}</span></div><span class="status-pill">${b}</span></div>`).join('');$('#lastUpdate').textContent=DB.lastRemoteUpdate?`最近外部更新：${new Date(DB.lastRemoteUpdate).toLocaleString('zh-TW')}｜本機修改即時保存`:(DB.lastLocalUpdate?`最後本機重新計算：${DB.lastLocalUpdate}`:'所有修改即時寫入 LocalStorage');$('#goalCount').textContent=DB.goals.length+' 個';$('#taskCount').textContent=DB.tasks.length+' 個';$('#completionCount').textContent=Object.values(DB.completions).reduce((a,b)=>a+b.length,0)+' 筆';$('#eventCount').textContent=DB.events.length+' 筆';$('#schemaVersion').textContent='v'+SCHEMA_VERSION;$('#deletedHistory').innerHTML=DB.deleted.length?DB.deleted.slice(0,8).map(x=>`<div class="history-item"><div><b>${esc(x.type)}｜${esc(x.title)}</b><span>${esc(x.deletedAt)}</span></div></div>`).join(''):'<div class="empty">尚無刪除歷程。</div>';const states=OPPORTUNITY_SOURCES.map(src=>sourceDiagnosticHTML(src,DB.sourceState?.[src.id])).join('');const fs=DB.feedState||{},feedOk=!!fs.loaded,feedSkipped=!!fs.skippedLocalPreview;const feedText=feedOk?`${fs.count||0} 筆｜產生 ${fs.generatedAt?new Date(fs.generatedAt).toLocaleString('zh-TW'):'時間未知'}`:feedSkipped?'目前為本機 HTML 預覽；部署到網站後才讀取排程資料檔':(fs.error?`讀取失敗：${esc(fs.error)}`:'尚未讀取');const feedDotClass=feedOk||feedSkipped?'':'amber',feedPillClass=feedOk||feedSkipped?'':'warn',feedPill=feedOk?'已同步':feedSkipped?'本機略過':'待檢查';let backgroundDiag='';if(feedOk&&fs.sources){backgroundDiag='<div class="notice" style="margin:8px 0"><strong>背景排程來源診斷</strong><br>'+Object.values(fs.sources).map(x=>`${esc(x.name||'來源')}：${x.count||0} 筆${x.diagnostics?`（原始 ${x.diagnostics.rawCount||0} → 辨識 ${x.diagnostics.identifiedCount||0} → 最終 ${x.diagnostics.finalCount||0}）`:''}`).join('<br>')+'</div>'}$('#externalStatus').innerHTML=`<div class="source-row"><div class="source-dot ${feedDotClass}"></div><div class="source-main"><b>背景排程資料檔</b><span>${feedText}</span></div><span class="status-pill ${feedPillClass}">${feedPill}</span></div>`+backgroundDiag+states+`<div class="source-row"><div class="source-dot"></div><div class="source-main"><b>開啟系統前端備援更新</b><span>${feedSkipped?'本機預覽直接使用公開來源更新':'背景資料過舊或不存在時才直接抓公開來源'}</span></div><span class="status-pill">已啟用</span></div><div class="source-row"><div class="source-dot ${hosted?'':'amber'}"></div><div class="source-main"><b>網站關閉後背景排程</b><span>${hosted?(feedOk?'網站已部署，且已讀取背景排程資料':'網站已部署；若尚未執行 GitHub Actions，請先在 Actions 手動執行一次工作流程'):'本機 HTML 預覽不會執行雲端排程；上傳 GitHub Pages 後才啟用'}</span></div><span class="status-pill ${hosted?'':'warn'}">${hosted?(feedOk?'已部署':'待首次同步'):'待上傳'}</span></div>`;$('#opportunityArchive').innerHTML=DB.opportunityArchive.length?DB.opportunityArchive.slice(0,10).map(o=>`<div class="history-item"><div><b>${esc(o.type==='activity'?'活動':'獎助')}｜${esc(o.title)}</b><span>${esc(o.retireReason||'已汰除')}｜${o.deadline||'無期限'}｜${o.sourceName||o.org}</span></div></div>`).join(''):'<div class="empty">尚無機會汰除紀錄。</div>';const last=DB.updateLog?.[0];if(last)setRemoteStatus(last.ok?'來源已同步':'更新失敗');renderPWAInstallState();renderDataProtectionState();renderNotificationCenter();renderStorageState()}
+
+/* CYSH YOUTH V7 UI HOTFIX */
+let opportunityArchiveExpanded=false;
+function archiveDisplayTitle(o){
+ const raw=String(o?.title||'');
+ const links=[...raw.matchAll(/(?<!!)\[([^\]\n]{3,220})\]\s*\(([^)]+)\)/g)]
+  .map(m=>cleanText(m[1]))
+  .filter(x=>x&&!/^(?:競賽|活動|獎補助金|獎學金|補助|津貼|貸款)$/.test(x));
+ if(links.length)return links[0].slice(0,140);
+ let s=raw
+  .replace(/!\[[^\]]*\]\s*\([^)]+\)/g,' ')
+  .replace(/\[([^\]]+)\]\s*\([^)]+\)/g,' $1 ')
+  .replace(/https?:\/\/\S+/g,' ')
+  .replace(/^\s*\d{1,2}\s+/,' ')
+  .replace(/\s*申請期限[\s\S]*$/,' ');
+ return cleanText(s).slice(0,140)||'未命名機會';
+}
+function renderOpportunityArchive(){
+ const box=$('#opportunityArchive'),summary=$('#opportunityArchiveSummary'),btn=$('#toggleOpportunityArchive');
+ if(!box||!summary||!btn)return;
+ const rows=Array.isArray(DB.opportunityArchive)?DB.opportunityArchive:[];
+ summary.textContent=rows.length?`${rows.length} 筆已保存（上限 200 筆）｜預設收合，展開時顯示最近 10 筆。`:'目前沒有汰除紀錄。';
+ btn.textContent=opportunityArchiveExpanded?'收合歷程':`查看歷程${rows.length?`（${rows.length}）`:''}`;
+ box.classList.toggle('collapsed',!opportunityArchiveExpanded);
+ if(!opportunityArchiveExpanded){box.innerHTML='';return}
+ box.innerHTML=rows.length?rows.slice(0,10).map(o=>{
+  const type=o.type==='activity'?'活動':'獎助';
+  const title=archiveDisplayTitle(o);
+  const reason=esc(o.retireReason||'已汰除');
+  const deadline=esc(o.deadline||'無期限');
+  const source=esc(o.sourceName||o.org||'來源待確認');
+  return `<div class="history-item"><div><b>${type}｜${esc(title)}</b><span>${reason}｜原截止 ${deadline}｜來源 ${source}</span></div></div>`;
+ }).join(''):'<div class="empty">尚無機會汰除紀錄。</div>';
+}
+function toggleOpportunityArchive(){opportunityArchiveExpanded=!opportunityArchiveExpanded;renderOpportunityArchive()}
+
+function renderSystem(){const hosted=['http:','https:'].includes(String(location.protocol||'').toLowerCase()),webPushReady=!!DB.notificationState?.remote?.subscribed;const deployLabel=hosted?'網站版｜背景排程可啟用':'本機預覽｜背景排程未啟用';const dm=$('#deployModeText');if(dm)dm.textContent=deployLabel;$('#buildStamp').textContent=`版本 ${APP_BUILD}｜Schema v${SCHEMA_VERSION}｜PWA v3 自動更新｜通知中心 v2｜Web Push v1｜嘉中解析器 v${CYSH_PARSER_VERSION}｜前端 45 秒上限`;if($('#engineVersion'))$('#engineVersion').textContent=`目前引擎：${APP_BUILD}｜嘉中 Parser v${CYSH_PARSER_VERSION}`;const status=[['四級目標 CRUD','可運作'],['排程與今日待辦','可運作'],['完成紀錄／進度回推','可運作'],['子任務時間邊界／行事曆連動','可運作'],['活動／獎助轉計畫','可運作'],['外部抓取／更新／去重／汰除','可運作'],['抓取診斷／排除原因','可運作'],['備份／匯入／刪除歷程','可運作'],['PWA 安裝／資料保全','可運作'],['通知中心／App 活動中提醒','可運作'],['Web Push／App 關閉後提醒',webPushReady?'可運作':'需連接後端']];$('#coreStatus').innerHTML=status.map(([a,b])=>`<div class="source-row"><div class="source-dot"></div><div class="source-main"><b>${a}</b><span>${a.includes('外部')||a.includes('抓取')?'公開來源＋本機快取':'前端本機資料'}</span></div><span class="status-pill">${b}</span></div>`).join('');$('#lastUpdate').textContent=DB.lastRemoteUpdate?`最近外部更新：${new Date(DB.lastRemoteUpdate).toLocaleString('zh-TW')}｜本機修改即時保存`:(DB.lastLocalUpdate?`最後本機重新計算：${DB.lastLocalUpdate}`:'所有修改即時寫入 LocalStorage');$('#goalCount').textContent=DB.goals.length+' 個';$('#taskCount').textContent=DB.tasks.length+' 個';$('#completionCount').textContent=Object.values(DB.completions).reduce((a,b)=>a+b.length,0)+' 筆';$('#eventCount').textContent=DB.events.length+' 筆';$('#schemaVersion').textContent='v'+SCHEMA_VERSION;$('#deletedHistory').innerHTML=DB.deleted.length?DB.deleted.slice(0,8).map(x=>`<div class="history-item"><div><b>${esc(x.type)}｜${esc(x.title)}</b><span>${esc(x.deletedAt)}</span></div></div>`).join(''):'<div class="empty">尚無刪除歷程。</div>';const states=OPPORTUNITY_SOURCES.map(src=>sourceDiagnosticHTML(src,DB.sourceState?.[src.id])).join('');const fs=DB.feedState||{},feedOk=!!fs.loaded,feedSkipped=!!fs.skippedLocalPreview;const feedText=feedOk?`${fs.count||0} 筆｜產生 ${fs.generatedAt?new Date(fs.generatedAt).toLocaleString('zh-TW'):'時間未知'}`:feedSkipped?'目前為本機 HTML 預覽；部署到網站後才讀取排程資料檔':(fs.error?`讀取失敗：${esc(fs.error)}`:'尚未讀取');const feedDotClass=feedOk||feedSkipped?'':'amber',feedPillClass=feedOk||feedSkipped?'':'warn',feedPill=feedOk?'已同步':feedSkipped?'本機略過':'待檢查';let backgroundDiag='';if(feedOk&&fs.sources){backgroundDiag='<div class="notice" style="margin:8px 0"><strong>背景排程來源診斷</strong><br>'+Object.values(fs.sources).map(x=>`${esc(x.name||'來源')}：${x.count||0} 筆${x.diagnostics?`（原始 ${x.diagnostics.rawCount||0} → 辨識 ${x.diagnostics.identifiedCount||0} → 最終 ${x.diagnostics.finalCount||0}）`:''}`).join('<br>')+'</div>'}$('#externalStatus').innerHTML=`<div class="source-row"><div class="source-dot ${feedDotClass}"></div><div class="source-main"><b>背景排程資料檔</b><span>${feedText}</span></div><span class="status-pill ${feedPillClass}">${feedPill}</span></div>`+backgroundDiag+states+`<div class="source-row"><div class="source-dot"></div><div class="source-main"><b>開啟系統前端備援更新</b><span>${feedSkipped?'本機預覽直接使用公開來源更新':'背景資料過舊或不存在時才直接抓公開來源'}</span></div><span class="status-pill">已啟用</span></div><div class="source-row"><div class="source-dot ${hosted?'':'amber'}"></div><div class="source-main"><b>網站關閉後背景排程</b><span>${hosted?(feedOk?'網站已部署，且已讀取背景排程資料':'網站已部署；若尚未執行 GitHub Actions，請先在 Actions 手動執行一次工作流程'):'本機 HTML 預覽不會執行雲端排程；上傳 GitHub Pages 後才啟用'}</span></div><span class="status-pill ${hosted?'':'warn'}">${hosted?(feedOk?'已部署':'待首次同步'):'待上傳'}</span></div>`;renderOpportunityArchive();const last=DB.updateLog?.[0];if(last)setRemoteStatus(last.ok?'來源已同步':'更新失敗');renderPWAInstallState();renderDataProtectionState();renderNotificationCenter();renderStorageState()}
 
 $('#clearHistory').onclick=()=>{DB.deleted=[];saveDB();renderSystem();toast('刪除歷程已清除')};
 $('#exportData').onclick=()=>{const copy=JSON.parse(JSON.stringify(DB));if(copy.notificationState?.remote){copy.notificationState.remote.deviceSecret='';copy.notificationState.remote.subscribed=false;copy.notificationState.remote.lastError='';}const blob=new Blob([JSON.stringify(copy,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`嘉中高三自我管理備份_${TODAY}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),500);toast('備份已匯出（未包含 Web Push 裝置密鑰）')};

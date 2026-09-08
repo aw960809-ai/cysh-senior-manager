@@ -1,9 +1,10 @@
 /* CYSH AUTO UPDATE V3 */
 /* CYSH AUTO UPDATE V3.1 FIRST-RUN FIX */
+/* CYSH UPDATE QUIET AUTO UI */
 (() => {
   'use strict';
 
-  const VERSION = '3.1.0';
+  const VERSION = '3.1.1';
   const CHECK_EVERY_MS = 5 * 60 * 1000;
   const FOREGROUND_MIN_MS = 60 * 1000;
   const AUTO_APPLY_DELAY_MS = 1200;
@@ -248,7 +249,7 @@
 
       if(!manual && isEditing()){
         setUI('update','發現新版本；完成目前輸入後會自動更新');
-        showBar();
+        hideBar();
         delayedTimer = setTimeout(() => {
           applying = false;
           applyLatest(false);
@@ -338,7 +339,7 @@
             ? `執行版本 ${currentBuild} 落後於 ${remoteBuild}，正在自動更新…`
             : `執行版本 ${currentBuild} 落後於 ${remoteBuild}，可以立即更新`
         );
-        showBar();
+        if(manual)showBar();else hideBar();
 
         if(autoApply && !manual){
           setTimeout(() => applyLatest(false), AUTO_APPLY_DELAY_MS);
