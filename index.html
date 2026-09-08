@@ -476,6 +476,103 @@ input[type="checkbox"],input[type="radio"]{accent-color:var(--green,#315f50)!imp
     padding-bottom:calc(124px + env(safe-area-inset-bottom))!important;
   }
 }
+
+/* CYSH HOME + INTERACTION V10.4.3 */
+
+/* 移除 Android / Chrome 原生藍色點擊回饋 */
+html,body,button,.btn,a,label,input,select,textarea,[role="button"],nav *, .nav *, .bottom-nav *{
+  -webkit-tap-highlight-color:transparent!important;
+}
+button,.btn,a,[role="button"],.bottom-nav button,.bottom-nav a,nav button,nav a{
+  transition:transform .10s ease,box-shadow .12s ease,background-color .12s ease,border-color .12s ease,opacity .12s ease,filter .12s ease!important;
+}
+button:active,.btn:active,a:active,[role="button"]:active,.bottom-nav button:active,.bottom-nav a:active,nav button:active,nav a:active{
+  transform:scale(.975);filter:brightness(.965);
+}
+button:focus,.btn:focus,a:focus,input:focus,select:focus,textarea:focus{outline:none!important}
+button:focus-visible,.btn:focus-visible,a:focus-visible,[role="button"]:focus-visible{
+  outline:3px solid rgba(47,106,87,.22)!important;outline-offset:2px!important;
+}
+input:focus-visible,select:focus-visible,textarea:focus-visible{
+  border-color:var(--green,#315f50)!important;box-shadow:0 0 0 3px rgba(47,106,87,.14)!important;
+}
+input[type="checkbox"],input[type="radio"]{accent-color:var(--green,#315f50)!important}
+.bottom-nav button:active,.bottom-nav a:active,nav button:active,nav a:active{
+  background:rgba(47,106,87,.08)!important;border-radius:14px;
+}
+
+/* 通知時段維持滿版 */
+#notifyQuietGroupV103{
+  width:100%!important;max-width:none!important;min-width:0!important;
+  grid-column:1/-1!important;justify-self:stretch!important;
+}
+#notifyQuietGroupV103 .notify-group-body-v103{width:100%!important;min-width:0!important}
+#notifyQuietGroupV103 .notify-quiet-times-v1031,
+#notifyQuietGroupV103 .notify-quiet-times-v103{
+  width:100%!important;min-width:0!important;display:grid!important;
+  grid-template-columns:minmax(0,1fr) 28px minmax(0,1fr)!important;
+  align-items:center!important;gap:8px!important;
+}
+#notifyQuietGroupV103 select,#notifyQuietGroupV103 input[type="time"]{
+  width:100%!important;min-width:0!important;max-width:none!important;box-sizing:border-box!important;font-size:16px!important;
+}
+
+/* 首頁主要操作 */
+.home-action-grid-v1043{
+  display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:10px!important;width:100%!important;align-items:stretch!important;
+}
+.home-action-v1043{
+  min-height:54px!important;width:100%!important;margin:0!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  text-align:center!important;line-height:1.25!important;border-radius:16px!important;
+  font-weight:800!important;box-sizing:border-box!important;
+}
+.home-action-wide-v1043{grid-column:1/-1!important}
+.home-action-primary-v1043{box-shadow:0 7px 18px rgba(47,106,87,.12)!important}
+.home-action-secondary-v1043{background:rgba(235,243,239,.9)!important}
+.home-action-tertiary-v1043{
+  background:rgba(248,241,224,.86)!important;border-color:rgba(183,148,74,.30)!important;color:#6f5b33!important;
+}
+
+/* 學測節奏主卡 */
+.home-rhythm-card-v1043{
+  padding:22px 20px!important;border-radius:24px!important;
+  box-shadow:0 8px 22px rgba(38,64,53,.06)!important;
+}
+
+/* 首頁統計卡 */
+.home-stats-grid-v1043{
+  display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:12px!important;align-items:stretch!important;
+}
+.home-stat-card-v1043{
+  min-width:0!important;min-height:142px!important;padding:18px 16px!important;
+  border-radius:22px!important;box-sizing:border-box!important;
+}
+.home-stat-wide-v1043{grid-column:1/-1!important;min-height:124px!important}
+
+/* 底部導覽安全距離，以 v10.4.2 為基準，不放大回舊版 */
+.home-today-section-v1043{
+  padding-bottom:calc(124px + env(safe-area-inset-bottom))!important;
+}
+
+@media(max-width:620px){
+  #notifyQuietGroupV103 .notify-quiet-times-v1031,
+  #notifyQuietGroupV103 .notify-quiet-times-v103{
+    grid-template-columns:minmax(0,1fr) 24px minmax(0,1fr)!important;gap:6px!important;
+  }
+  .home-action-v1043{min-height:52px!important;padding:11px 10px!important;font-size:14px!important}
+  .home-rhythm-card-v1043{padding:20px 18px!important}
+  .home-stats-grid-v1043{gap:10px!important}
+  .home-stat-card-v1043{min-height:132px!important;padding:16px 14px!important}
+  .home-stat-wide-v1043{min-height:112px!important}
+}
+@media(max-width:390px){
+  .home-action-grid-v1043{grid-template-columns:1fr!important}
+  .home-action-wide-v1043{grid-column:auto!important}
+}
+
 </style>
 </head>
 <body>
@@ -545,7 +642,7 @@ const CYSH_PARSER_VERSION=8;
 const SOURCE_COOLDOWN_MS=10*60*1000, RATE_LIMIT_COOLDOWN_MS=20*60*1000;
 const REFRESH_TOTAL_TIMEOUT_MS=45*1000, SOURCE_TIMEOUT_MS={cysh:18*1000,youth:12*1000,moe:10*1000};
 const REFRESH_SLOW_HINT_MS=15*1000, REFRESH_DEEP_HINT_MS=30*1000;
-const APP_BUILD='v10.4.2-20260908-share-ready-home';
+const APP_BUILD='v10.4.3-20260908-home-interaction';
 const REMOTE_PUSH_HORIZON_DAYS=35;
 let remotePushSyncTimer=null,remotePushSyncBusy=false,remotePushReady=false;
 const TRIAL_START='2026-09-01',TRIAL_END='2027-08-31';
@@ -1823,6 +1920,73 @@ runOpportunityMaintenance();renderAll();saveDB();initPWA();maybeAutoRefresh();co
   function polish(){
     timer=0;
     polishActions();polishRhythm();polishStats();polishToday();
+  }
+  function schedule(){clearTimeout(timer);timer=setTimeout(polish,80)}
+  const mo=new MutationObserver(schedule);
+  function boot(){mo.observe(document.body,{childList:true,subtree:true});schedule()}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+  document.addEventListener('click',schedule,true);
+})();
+
+</script>
+
+<!-- CYSH HOME INTERACTION V10.4.3 -->
+<script>
+/* CYSH HOME INTERACTION V10.4.3 */
+(() => {
+  'use strict';
+  let timer=0;
+
+  function qa(sel,root=document){return [...root.querySelectorAll(sel)]}
+  function exactText(text){
+    return qa('button,a,h1,h2,h3,h4,b,strong,span,div,p')
+      .filter(el=>el.children.length===0)
+      .find(el=>el.textContent.trim()===text)||null;
+  }
+  function cardOf(n){return n?.closest('.card')||n?.closest('.panel')||n?.parentElement||null}
+  function commonParent(nodes){
+    const xs=nodes.filter(Boolean); if(!xs.length)return null;
+    let cur=xs[0].parentElement;
+    while(cur&&!xs.every(n=>cur.contains(n)))cur=cur.parentElement;
+    return cur;
+  }
+
+  function polishActions(){
+    const manage=exactText('管理目標與計畫');
+    const calendar=exactText('查看行事曆');
+    const add=exactText('新增具體任務');
+    if(manage)manage.classList.add('home-action-v1043','home-action-primary-v1043');
+    if(calendar)calendar.classList.add('home-action-v1043','home-action-secondary-v1043');
+    if(add)add.classList.add('home-action-v1043','home-action-tertiary-v1043','home-action-wide-v1043');
+    const p=commonParent([manage,calendar,add]);
+    if(p)p.classList.add('home-action-grid-v1043');
+  }
+
+  function polishRhythm(){
+    const c=cardOf(exactText('穩定建立學測節奏'));
+    if(c)c.classList.add('home-rhythm-card-v1043');
+  }
+
+  function polishStats(){
+    const labels=['今日執行率','本週執行率','進行中子任務','7 日壓力量','高適配機會'];
+    const cards=labels.map(t=>cardOf(exactText(t))).filter(Boolean);
+    cards.forEach((c,i)=>{
+      c.classList.add('home-stat-card-v1043');
+      if(labels[i]==='高適配機會')c.classList.add('home-stat-wide-v1043');
+    });
+    const p=commonParent(cards);
+    if(p)p.classList.add('home-stats-grid-v1043');
+  }
+
+  function polishToday(){
+    const h=exactText('今日計畫執行');
+    const s=h?.closest('section')||h?.parentElement?.parentElement;
+    if(s)s.classList.add('home-today-section-v1043');
+  }
+
+  function polish(){
+    timer=0;
+    polishActions(); polishRhythm(); polishStats(); polishToday();
   }
   function schedule(){clearTimeout(timer);timer=setTimeout(polish,80)}
   const mo=new MutationObserver(schedule);
