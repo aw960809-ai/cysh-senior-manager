@@ -53,6 +53,184 @@ button,input,select,textarea{font:inherit}.app{max-width:1240px;margin:auto;padd
  .setting-switch:has(#notifyQuietStart) input[type="time"]{width:100%;min-width:0}
 }
 
+
+/* CYSH NOTIFICATION UI V10.3 */
+.cysh-notification-ui-v103{
+  display:grid;
+  gap:14px;
+}
+.cysh-notification-ui-v103 .notify-master-v103{
+  position:relative;
+  border:1px solid rgba(48,96,80,.18);
+  border-radius:16px;
+  padding:14px 14px 12px;
+  background:rgba(232,241,236,.62);
+  margin-bottom:2px;
+}
+.cysh-notification-ui-v103 .notify-master-caption-v103{
+  margin:5px 0 0 48px;
+  font-size:10px;
+  line-height:1.45;
+  color:var(--muted,#728079);
+}
+.notify-group-v103{
+  border:1px solid var(--line,#dfe5de);
+  border-radius:18px;
+  background:rgba(255,255,255,.72);
+  overflow:hidden;
+}
+.notify-group-head-v103{
+  padding:13px 14px 10px;
+  border-bottom:1px solid var(--line,#e4e8e4);
+  background:rgba(246,249,247,.82);
+}
+.notify-group-head-v103 h4{
+  margin:0;
+  font-size:15px;
+  color:var(--text,#233c33);
+}
+.notify-group-head-v103 p{
+  margin:4px 0 0;
+  font-size:10px;
+  line-height:1.45;
+  color:var(--muted,#728079);
+}
+.notify-group-body-v103{
+  padding:0 14px;
+}
+.notify-group-body-v103>.setting-switch,
+.notify-group-body-v103>.setting-row,
+.notify-group-body-v103>.setting-item{
+  margin:0;
+  padding:12px 0;
+  border-bottom:1px solid var(--line,#e7ebe8);
+}
+.notify-group-body-v103>:last-child{
+  border-bottom:0!important;
+}
+.cysh-notification-ui-v103 input[type="checkbox"]:not([data-notify-lead]){
+  -webkit-appearance:none;
+  appearance:none;
+  width:40px;
+  height:23px;
+  min-width:40px;
+  border:0;
+  border-radius:999px;
+  background:#cbd5d0;
+  position:relative;
+  vertical-align:middle;
+  transition:.16s ease;
+  cursor:pointer;
+}
+.cysh-notification-ui-v103 input[type="checkbox"]:not([data-notify-lead])::after{
+  content:"";
+  position:absolute;
+  width:17px;
+  height:17px;
+  left:3px;
+  top:3px;
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 1px 4px rgba(0,0,0,.18);
+  transition:.16s ease;
+}
+.cysh-notification-ui-v103 input[type="checkbox"]:not([data-notify-lead]):checked{
+  background:var(--green,#2f6a57);
+}
+.cysh-notification-ui-v103 input[type="checkbox"]:not([data-notify-lead]):checked::after{
+  transform:translateX(17px);
+}
+.notify-time-row-v103 select,
+.notify-time-row-v103 input[type="time"]{
+  width:116px!important;
+  min-width:116px!important;
+  max-width:116px;
+}
+.notify-lead-row-v103{
+  padding:12px 0!important;
+}
+.notify-lead-row-v103 [data-notify-lead]{
+  accent-color:var(--green,#2f6a57);
+}
+.notify-quiet-row-v103{
+  padding:12px 0!important;
+}
+.notify-quiet-row-v103 select,
+.notify-quiet-row-v103 input[type="time"]{
+  min-width:0!important;
+}
+.notify-quiet-arrow-v103{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 8px;
+  font-weight:800;
+  color:var(--muted,#728079);
+}
+.notification-history-head-v103{
+  margin-top:14px;
+  padding:12px 0 8px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  border-top:1px solid var(--line,#e1e6e2);
+}
+.notification-history-head-v103 h4{
+  margin:0;
+  font-size:14px;
+}
+.notification-history-head-v103 p{
+  margin:3px 0 0;
+  font-size:10px;
+  color:var(--muted,#728079);
+}
+.notification-history-collapsed-v103>.history-item:nth-child(n+4){
+  display:none!important;
+}
+.cysh-notification-ui-v103 #notificationLog .history-item{
+  padding:10px 0;
+}
+@media(max-width:620px){
+  .notify-group-body-v103{
+    padding:0 12px;
+  }
+  .notify-group-body-v103>.setting-switch{
+    display:grid!important;
+    grid-template-columns:auto 1fr auto;
+    align-items:center;
+    gap:10px;
+  }
+  .notify-time-row-v103{
+    grid-template-columns:auto 1fr auto!important;
+  }
+  .notify-time-row-v103 select,
+  .notify-time-row-v103 input[type="time"]{
+    width:104px!important;
+    min-width:104px!important;
+  }
+  .notify-quiet-row-v103{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:9px!important;
+  }
+  .notify-quiet-row-v103>div:last-child{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:1fr auto 1fr!important;
+    align-items:center!important;
+    gap:4px!important;
+  }
+  .notify-quiet-row-v103 select,
+  .notify-quiet-row-v103 input[type="time"]{
+    width:100%!important;
+    min-width:0!important;
+  }
+  .notification-history-head-v103{
+    align-items:flex-end;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -122,7 +300,7 @@ const CYSH_PARSER_VERSION=8;
 const SOURCE_COOLDOWN_MS=10*60*1000, RATE_LIMIT_COOLDOWN_MS=20*60*1000;
 const REFRESH_TOTAL_TIMEOUT_MS=45*1000, SOURCE_TIMEOUT_MS={cysh:18*1000,youth:12*1000,moe:10*1000};
 const REFRESH_SLOW_HINT_MS=15*1000, REFRESH_DEEP_HINT_MS=30*1000;
-const APP_BUILD='v10.2.1-20260908-youth-parser-date-fix';
+const APP_BUILD='v10.3.0-20260908-notification-ui';
 const REMOTE_PUSH_HORIZON_DAYS=35;
 let remotePushSyncTimer=null,remotePushSyncBusy=false,remotePushReady=false;
 const TRIAL_START='2026-09-01',TRIAL_END='2027-08-31';
@@ -768,5 +946,205 @@ runOpportunityMaintenance();renderAll();saveDB();initPWA();maybeAutoRefresh();co
 </script>
 <!-- CYSH AUTO UPDATE V3 -->
 <script src="./update-manager.js"></script>
+
+<!-- CYSH NOTIFICATION UI V10.3 -->
+<script>
+/* CYSH NOTIFICATION UI V10.3 */
+(() => {
+  'use strict';
+
+  const MARK = 'cysh-notification-ui-v103';
+  let historyExpanded = false;
+  let scheduled = false;
+
+  function qs(sel, root=document){ return root.querySelector(sel); }
+  function qsa(sel, root=document){ return [...root.querySelectorAll(sel)]; }
+
+  function commonAncestor(nodes){
+    if(!nodes.length) return null;
+    let cur = nodes[0].parentElement;
+    while(cur && !nodes.every(n => cur.contains(n))) cur = cur.parentElement;
+    return cur;
+  }
+
+  function settingBlock(el){
+    if(!el) return null;
+    return el.closest('.setting-switch') ||
+      el.closest('.setting-row') ||
+      el.closest('.setting-item') ||
+      el.parentElement;
+  }
+
+  function makeGroup(id, title, desc){
+    let g = document.getElementById(id);
+    if(g) return g;
+    g = document.createElement('section');
+    g.id = id;
+    g.className = 'notify-group-v103';
+    g.innerHTML = `<div class="notify-group-head-v103"><h4>${title}</h4>${desc ? `<p>${desc}</p>` : ''}</div><div class="notify-group-body-v103"></div>`;
+    return g;
+  }
+
+  function moveUnique(group, node){
+    if(!group || !node) return;
+    const body = qs('.notify-group-body-v103', group);
+    if(body && !body.contains(node)) body.appendChild(node);
+  }
+
+  function ensureMaster(section){
+    const master = document.getElementById('notifyMaster');
+    const block = settingBlock(master);
+    if(!block || block.dataset.v103Master === '1') return;
+    block.dataset.v103Master = '1';
+    block.classList.add('notify-master-v103');
+    const title = block.querySelector('b,strong,h4,label') || block;
+    if(!block.querySelector('.notify-master-caption-v103')){
+      const cap = document.createElement('div');
+      cap.className = 'notify-master-caption-v103';
+      cap.textContent = '控制所有 App 內提醒與背景通知';
+      block.appendChild(cap);
+    }
+  }
+
+  function ensureDailyGroup(section){
+    const today = document.getElementById('notifyTodayTasks');
+    const overdue = document.getElementById('notifyOverdue');
+    const time = document.getElementById('notifyTodayDailyTime');
+    const blocks = [settingBlock(today), settingBlock(overdue)].filter(Boolean);
+    if(!blocks.length) return;
+
+    let group = document.getElementById('notifyDailyGroupV103');
+    if(!group){
+      group = makeGroup('notifyDailyGroupV103','每日提醒','固定時間與近期漏做檢查');
+      blocks[0].parentElement.insertBefore(group, blocks[0]);
+    }
+    blocks.forEach(b => moveUnique(group,b));
+
+    if(time){
+      const timeBlock = settingBlock(time);
+      if(timeBlock) {
+        timeBlock.classList.add('notify-time-row-v103');
+        moveUnique(group,timeBlock);
+      }
+      time.setAttribute('aria-label','今日待辦提醒時間');
+    }
+  }
+
+  function ensureDeadlineGroup(section){
+    const ids = ['notifySubgoal','notifyActivity','notifyScholarship','notifyCalendar'];
+    const blocks = ids.map(id => settingBlock(document.getElementById(id))).filter(Boolean);
+    const leadInputs = qsa('[data-notify-lead]');
+    if(!blocks.length && !leadInputs.length) return;
+
+    let first = blocks[0] || leadInputs[0];
+    let group = document.getElementById('notifyDeadlineGroupV103');
+    if(!group){
+      group = makeGroup('notifyDeadlineGroupV103','期限提醒','子任務、活動、獎助與行事曆期限');
+      (first.closest('.setting-switch') || first.parentElement).parentElement.insertBefore(group, first.closest('.setting-switch') || first.parentElement);
+    }
+    blocks.forEach(b => moveUnique(group,b));
+
+    if(leadInputs.length){
+      let leadBlock = commonAncestor(leadInputs);
+      while(leadBlock && leadBlock !== section && leadBlock.parentElement && leadBlock.parentElement.querySelectorAll('[data-notify-lead]').length === leadInputs.length){
+        if(leadBlock.parentElement === section || leadBlock.parentElement.classList.contains('card')) break;
+        leadBlock = leadBlock.parentElement;
+      }
+      if(leadBlock && leadBlock !== section){
+        leadBlock.classList.add('notify-lead-row-v103');
+        moveUnique(group,leadBlock);
+      }
+    }
+  }
+
+  function ensureQuietGroup(section){
+    const start = document.getElementById('notifyQuietStart');
+    const end = document.getElementById('notifyQuietEnd');
+    if(!start || !end) return;
+    const block = commonAncestor([start,end]) || settingBlock(start);
+    if(!block) return;
+
+    let group = document.getElementById('notifyQuietGroupV103');
+    if(!group){
+      group = makeGroup('notifyQuietGroupV103','通知時段','勿擾期間不主動推播，下一次檢查時再提醒');
+      block.parentElement.insertBefore(group,block);
+    }
+    block.classList.add('notify-quiet-row-v103');
+    moveUnique(group,block);
+
+    start.setAttribute('aria-label','勿擾開始時間');
+    end.setAttribute('aria-label','勿擾結束時間');
+
+    let times = commonAncestor([start,end]);
+    if(times && !times.querySelector('.notify-quiet-arrow-v103')){
+      const arrow = document.createElement('span');
+      arrow.className = 'notify-quiet-arrow-v103';
+      arrow.textContent = '→';
+      end.parentElement?.insertBefore(arrow,end);
+    }
+  }
+
+  function ensureHistory(section){
+    const log = document.getElementById('notificationLog');
+    if(!log) return;
+
+    let head = document.getElementById('notificationHistoryHeadV103');
+    if(!head){
+      head = document.createElement('div');
+      head.id = 'notificationHistoryHeadV103';
+      head.className = 'notification-history-head-v103';
+      log.parentElement.insertBefore(head,log);
+    }
+
+    const items = qsa('.history-item',log);
+    head.innerHTML = `<div><h4>最近通知紀錄</h4><p>${items.length ? `${items.length} 筆紀錄` : '尚無通知紀錄'}</p></div>
+      ${items.length > 3 ? `<button type="button" class="btn ghost small" id="toggleNotificationHistoryV103">${historyExpanded ? '收合' : '查看全部'}</button>` : ''}`;
+
+    log.classList.toggle('notification-history-collapsed-v103',!historyExpanded);
+
+    const btn = document.getElementById('toggleNotificationHistoryV103');
+    if(btn) btn.onclick = () => {
+      historyExpanded = !historyExpanded;
+      ensureHistory(section);
+    };
+  }
+
+  function polish(){
+    scheduled = false;
+    const master = document.getElementById('notifyMaster');
+    const section = master?.closest('.card') || master?.closest('section') || master?.parentElement?.parentElement;
+    if(!section) return;
+
+    section.classList.add(MARK);
+    ensureMaster(section);
+    ensureDailyGroup(section);
+    ensureDeadlineGroup(section);
+    ensureQuietGroup(section);
+    ensureHistory(section);
+  }
+
+  function schedule(){
+    if(scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => setTimeout(polish,0));
+  }
+
+  const observer = new MutationObserver(schedule);
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded',() => {
+      observer.observe(document.body,{childList:true,subtree:true});
+      schedule();
+    });
+  }else{
+    observer.observe(document.body,{childList:true,subtree:true});
+    schedule();
+  }
+
+  document.addEventListener('click',e => {
+    if(e.target?.closest?.('[data-tab="system"],[data-page="system"],#navSystem')) setTimeout(schedule,60);
+  });
+})();
+
+</script>
 </body>
 </html>
