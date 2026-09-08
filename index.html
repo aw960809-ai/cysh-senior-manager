@@ -231,6 +231,105 @@ button,input,select,textarea{font:inherit}.app{max-width:1240px;margin:auto;padd
   }
 }
 
+
+/* CYSH NOTIFICATION UI V10.3.1 HOTFIX */
+.cysh-notification-ui-v1031 .notify-lead-row-v1031{
+  margin:0!important;
+  padding:12px 0!important;
+  border-top:1px solid var(--line,#e6ebe7);
+}
+.cysh-notification-ui-v1031 #notifyDeadlineGroupV103 .notify-lead-row-v1031{
+  border-bottom:0!important;
+}
+.cysh-notification-ui-v1031 #notifyQuietGroupV103{
+  margin-top:0;
+}
+.notify-quiet-copy-v1031{
+  margin:0!important;
+  padding:12px 0 4px!important;
+  border:0!important;
+}
+.notify-quiet-copy-v1031 b,
+.notify-quiet-copy-v1031 strong{
+  font-size:14px;
+}
+.notify-quiet-desc-v1031{
+  font-size:10px;
+  line-height:1.5;
+  color:var(--muted,#728079);
+  padding:0 0 8px;
+}
+.notify-quiet-times-v1031{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;
+  gap:8px!important;
+  align-items:center!important;
+  width:100%!important;
+  padding:8px 0 14px!important;
+}
+.notify-quiet-times-v1031 select,
+.notify-quiet-times-v1031 input[type="time"]{
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+}
+.notify-quiet-arrow-v1031{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:900;
+  color:var(--muted,#728079);
+  min-width:20px;
+}
+.notify-history-card-v1031{
+  margin-top:14px;
+  border:1px solid var(--line,#dfe5de);
+  border-radius:18px;
+  background:rgba(255,255,255,.72);
+  overflow:hidden;
+}
+.notify-history-head-v1031{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:13px 14px 10px;
+  background:rgba(246,249,247,.82);
+  border-bottom:1px solid var(--line,#e4e8e4);
+}
+.notify-history-head-v1031 h4{
+  margin:0;
+  font-size:15px;
+  color:var(--text,#233c33);
+}
+.notify-history-head-v1031 p{
+  margin:4px 0 0;
+  font-size:10px;
+  color:var(--muted,#728079);
+}
+.notify-history-card-v1031 #notificationLog{
+  padding:0 14px;
+}
+.notify-history-card-v1031 #notificationLog .history-item{
+  padding:11px 0;
+  border-bottom:1px solid var(--line,#e7ebe8);
+}
+.notify-history-card-v1031 #notificationLog .history-item:last-child{
+  border-bottom:0;
+}
+.notification-history-collapsed-v1031>.history-item:nth-child(n+4){
+  display:none!important;
+}
+@media(max-width:620px){
+  .notify-history-head-v1031{
+    align-items:flex-end;
+  }
+  .notify-quiet-times-v1031{
+    grid-template-columns:minmax(0,1fr) 24px minmax(0,1fr)!important;
+    gap:6px!important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -300,7 +399,7 @@ const CYSH_PARSER_VERSION=8;
 const SOURCE_COOLDOWN_MS=10*60*1000, RATE_LIMIT_COOLDOWN_MS=20*60*1000;
 const REFRESH_TOTAL_TIMEOUT_MS=45*1000, SOURCE_TIMEOUT_MS={cysh:18*1000,youth:12*1000,moe:10*1000};
 const REFRESH_SLOW_HINT_MS=15*1000, REFRESH_DEEP_HINT_MS=30*1000;
-const APP_BUILD='v10.3.0-20260908-notification-ui';
+const APP_BUILD='v10.3.1-20260908-notification-ui-hotfix';
 const REMOTE_PUSH_HORIZON_DAYS=35;
 let remotePushSyncTimer=null,remotePushSyncBusy=false,remotePushReady=false;
 const TRIAL_START='2026-09-01',TRIAL_END='2027-08-31';
@@ -1143,6 +1242,244 @@ runOpportunityMaintenance();renderAll();saveDB();initPWA();maybeAutoRefresh();co
   document.addEventListener('click',e => {
     if(e.target?.closest?.('[data-tab="system"],[data-page="system"],#navSystem')) setTimeout(schedule,60);
   });
+})();
+
+</script>
+
+<!-- CYSH NOTIFICATION UI V10.3.1 HOTFIX -->
+<script>
+/* CYSH NOTIFICATION UI V10.3.1 HOTFIX */
+(() => {
+  'use strict';
+
+  let historyExpanded = false;
+  let timer = 0;
+
+  function q(sel,root=document){ return root.querySelector(sel); }
+  function qa(sel,root=document){ return [...root.querySelectorAll(sel)]; }
+
+  function lowestCommonAncestor(nodes){
+    const xs = nodes.filter(Boolean);
+    if(!xs.length) return null;
+    let cur = xs[0];
+    while(cur){
+      if(xs.every(n => cur === n || cur.contains(n))) return cur;
+      cur = cur.parentElement;
+    }
+    return null;
+  }
+
+  function exactText(root,text){
+    return qa('h2,h3,h4,h5,b,strong,label,div,span,p',root)
+      .filter(el => el.children.length === 0)
+      .find(el => el.textContent.trim() === text) || null;
+  }
+
+  function safeBlock(node,root){
+    if(!node) return null;
+    let cur = node;
+    while(cur && cur.parentElement && cur.parentElement !== root){
+      const cls = cur.classList;
+      if(cls?.contains('setting-switch') || cls?.contains('setting-row') ||
+         cls?.contains('setting-item') || cls?.contains('notify-row-v1031')) return cur;
+      if(cur.parentElement.children.length > 1 && cur.textContent.trim().length < 600) return cur;
+      cur = cur.parentElement;
+    }
+    return node.parentElement;
+  }
+
+  function ensureGroup(root,id,title,desc,beforeNode){
+    let group = document.getElementById(id);
+    if(group) return group;
+
+    group = document.createElement('section');
+    group.id = id;
+    group.className = 'notify-group-v103 notify-group-v1031';
+    group.innerHTML = `
+      <div class="notify-group-head-v103">
+        <h4>${title}</h4>
+        <p>${desc}</p>
+      </div>
+      <div class="notify-group-body-v103"></div>`;
+
+    const anchor = beforeNode || root.lastElementChild;
+    if(anchor?.parentElement) anchor.parentElement.insertBefore(group,anchor);
+    else root.appendChild(group);
+    return group;
+  }
+
+  function moveInto(group,node){
+    if(!group || !node || group.contains(node)) return;
+    q('.notify-group-body-v103',group)?.appendChild(node);
+  }
+
+  function fixLead(root){
+    const leads = qa('[data-notify-lead]',root);
+    if(!leads.length) return;
+
+    const title = exactText(root,'截止提前提醒');
+    const lca = lowestCommonAncestor([title,...leads]);
+
+    let block = lca;
+    if(block === root || block?.classList?.contains('card')){
+      const leadWrap = lowestCommonAncestor(leads);
+      const titleBlock = safeBlock(title,root);
+      const leadBlock = safeBlock(leadWrap,root);
+
+      let group = document.getElementById('notifyDeadlineGroupV103');
+      if(!group){
+        group = ensureGroup(root,'notifyDeadlineGroupV103','期限提醒','子任務、活動、獎助與行事曆期限',titleBlock||leadBlock);
+      }
+      if(titleBlock && !group.contains(titleBlock)) moveInto(group,titleBlock);
+      if(leadBlock && !group.contains(leadBlock)) moveInto(group,leadBlock);
+      return;
+    }
+
+    let group = document.getElementById('notifyDeadlineGroupV103');
+    if(!group){
+      group = ensureGroup(root,'notifyDeadlineGroupV103','期限提醒','子任務、活動、獎助與行事曆期限',block);
+    }
+    block.classList.add('notify-lead-row-v103','notify-lead-row-v1031');
+    moveInto(group,block);
+  }
+
+  function fixQuiet(root){
+    const start = document.getElementById('notifyQuietStart');
+    const end = document.getElementById('notifyQuietEnd');
+    if(!start || !end) return;
+
+    const title = exactText(root,'勿擾時段');
+    const desc = qa('small,p,div',root).find(el =>
+      el.children.length === 0 &&
+      /非手動測試時.*不發通知/.test(el.textContent)
+    );
+
+    let group = document.getElementById('notifyQuietGroupV103');
+    if(!group){
+      const anchor = safeBlock(title,root) || start;
+      group = ensureGroup(
+        root,
+        'notifyQuietGroupV103',
+        '通知時段',
+        '勿擾期間不主動推播，下一次檢查時再提醒',
+        anchor
+      );
+    }
+
+    const body = q('.notify-group-body-v103',group);
+    if(!body) return;
+
+    const titleBlock = safeBlock(title,root);
+    if(titleBlock && !group.contains(titleBlock)){
+      titleBlock.classList.add('notify-quiet-copy-v1031');
+      body.appendChild(titleBlock);
+    }
+
+    if(desc && !group.contains(desc) && !titleBlock?.contains(desc)){
+      const d = document.createElement('div');
+      d.className = 'notify-quiet-desc-v1031';
+      d.textContent = desc.textContent.trim();
+      body.appendChild(d);
+      desc.style.display='none';
+    }
+
+    let times = lowestCommonAncestor([start,end]);
+    if(times === root || times?.classList?.contains('card')){
+      const wrap = document.createElement('div');
+      wrap.className = 'notify-quiet-times-v1031';
+      start.parentElement?.insertBefore(wrap,start);
+      wrap.appendChild(start);
+      wrap.appendChild(end);
+      times = wrap;
+    }
+
+    if(times && !group.contains(times)){
+      times.classList.add('notify-quiet-times-v1031');
+      body.appendChild(times);
+    }
+
+    if(times && !q('.notify-quiet-arrow-v1031',times)){
+      const arrow = document.createElement('span');
+      arrow.className = 'notify-quiet-arrow-v1031';
+      arrow.textContent = '→';
+      if(end.parentElement === times) times.insertBefore(arrow,end);
+      else {
+        const inner = lowestCommonAncestor([start,end]);
+        if(inner && inner !== times) inner.insertBefore(arrow,end);
+      }
+    }
+
+    start.setAttribute('aria-label','勿擾開始時間');
+    end.setAttribute('aria-label','勿擾結束時間');
+  }
+
+  function fixHistory(root){
+    const log = document.getElementById('notificationLog');
+    if(!log) return;
+
+    let group = document.getElementById('notificationHistoryGroupV1031');
+    if(!group){
+      group = document.createElement('section');
+      group.id = 'notificationHistoryGroupV1031';
+      group.className = 'notify-history-card-v1031';
+      log.parentElement.insertBefore(group,log);
+      group.appendChild(log);
+    } else if(!group.contains(log)){
+      group.appendChild(log);
+    }
+
+    let head = q('.notify-history-head-v1031',group);
+    if(!head){
+      head = document.createElement('div');
+      head.className = 'notify-history-head-v1031';
+      group.insertBefore(head,log);
+    }
+
+    const items = qa('.history-item',log);
+    head.innerHTML = `
+      <div>
+        <h4>最近通知紀錄</h4>
+        <p>${items.length ? `${items.length} 筆紀錄；預設顯示最近 3 筆` : '尚無通知紀錄'}</p>
+      </div>
+      ${items.length > 3 ? `<button type="button" class="btn ghost small" id="toggleNotificationHistoryV1031">${historyExpanded ? '收合' : '查看全部'}</button>` : ''}`;
+
+    log.classList.toggle('notification-history-collapsed-v1031',!historyExpanded);
+
+    const btn = document.getElementById('toggleNotificationHistoryV1031');
+    if(btn) btn.onclick = () => {
+      historyExpanded = !historyExpanded;
+      fixHistory(root);
+    };
+  }
+
+  function polish(){
+    timer = 0;
+    const master = document.getElementById('notifyMaster');
+    const root = master?.closest('.card') || master?.closest('section') || master?.parentElement?.parentElement;
+    if(!root) return;
+
+    root.classList.add('cysh-notification-ui-v1031');
+    fixLead(root);
+    fixQuiet(root);
+    fixHistory(root);
+  }
+
+  function schedule(){
+    if(timer) clearTimeout(timer);
+    timer = setTimeout(polish,100);
+  }
+
+  const observer = new MutationObserver(schedule);
+
+  function boot(){
+    observer.observe(document.body,{childList:true,subtree:true});
+    schedule();
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded',boot);
+  else boot();
+
+  document.addEventListener('click',schedule,true);
 })();
 
 </script>
