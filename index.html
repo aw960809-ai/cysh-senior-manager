@@ -450,6 +450,32 @@ input[type="checkbox"],input[type="radio"]{accent-color:var(--green,#315f50)!imp
   }
 }
 
+
+/* CYSH SHARE READY HOME V10.4.2 */
+/* v10.4.1 的安全距離略為收斂，仍保留底部導覽列空間 */
+.home-page-v104,
+.home-today-section-v104{
+  padding-bottom:calc(116px + env(safe-area-inset-bottom))!important;
+}
+.home-stats-grid-v104{
+  margin-bottom:10px!important;
+}
+.upcoming-urgent-v1042{
+  background:rgba(161,83,83,.045);
+  border-radius:12px;
+  padding-left:8px!important;
+  padding-right:8px!important;
+}
+.upcoming-urgent-v1042 .todo-main>span{
+  color:var(--red,#a15353)!important;
+  font-weight:800;
+}
+@media(max-width:620px){
+  .home-page-v104,
+  .home-today-section-v104{
+    padding-bottom:calc(124px + env(safe-area-inset-bottom))!important;
+  }
+}
 </style>
 </head>
 <body>
@@ -519,7 +545,7 @@ const CYSH_PARSER_VERSION=8;
 const SOURCE_COOLDOWN_MS=10*60*1000, RATE_LIMIT_COOLDOWN_MS=20*60*1000;
 const REFRESH_TOTAL_TIMEOUT_MS=45*1000, SOURCE_TIMEOUT_MS={cysh:18*1000,youth:12*1000,moe:10*1000};
 const REFRESH_SLOW_HINT_MS=15*1000, REFRESH_DEEP_HINT_MS=30*1000;
-const APP_BUILD='v10.4.1-20260908-home-bottom-spacing';
+const APP_BUILD='v10.4.2-20260908-share-ready-home';
 const REMOTE_PUSH_HORIZON_DAYS=35;
 let remotePushSyncTimer=null,remotePushSyncBusy=false,remotePushReady=false;
 const TRIAL_START='2026-09-01',TRIAL_END='2027-08-31';
@@ -811,7 +837,17 @@ function extractCyshListingPosts(text,source){const src=String(text||''),byKey=n
  const genericLinks=extractMarkdownPosts(src,source.url).filter(p=>/\/p\/406-1008-/.test(p.url));for(const p of genericLinks)push(p.published,p.title,p.url);
  const lineRe=/(?:^|\n)\s*(20\d{2}[-\/.]\d{1,2}[-\/.]\d{1,2})\s+(?!https?:)([^\n]{4,260})/g;while((m=lineRe.exec(src))){let tail=m[2].trim();const lm=tail.match(/^\[([^\]]+)\]\(([^)]+)\)/);if(lm)push(m[1],lm[1],lm[2]);else push(m[1],tail.replace(/\[[^\]]*\]\([^)]*\)/g,' '),'')}
  return [...byKey.values()].sort((a,b)=>String(b.published).localeCompare(String(a.published)))}
-function eligibilityDecision(text){const s=cleanText(text);if(/公教人員子女|同仁子女|教職員工子女|子女教育補助/.test(s)&&!/學生(?:本人)?可申請|本校學生可申請/.test(s))return'reject';if(/(?:限|僅限|資格).*?(?:大專校院|大學生|研究生)|(?:大專校院|大學生|研究生|碩博士)(?:在學|限定|始得|方可)/.test(s)&&!/高中|高中職|高級中等|國高中/.test(s))return'reject';if(/本校學生|高中生|高中職|高級中等|國高中|中學生|青少年/.test(s))return'pass';if(/18\s*歲以上|年滿\s*18|青年/.test(s))return'review';return'review'}
+function eligibilityDecision(text){
+ const s=cleanText(text);
+ if(/公教人員子女|同仁子女|教職員工子女|子女教育補助/.test(s)&&!/學生(?:本人)?可申請|本校學生可申請/.test(s))return'reject';
+ const hasHighSchool=/(高中|高中職|高級中等|國高中|中學生)/.test(s);
+ const higherOnly=/(大專生|大學生|大專校院學生|研究生|碩士生|博士生|碩博士)/.test(s)&&!hasHighSchool;
+ if(higherOnly)return'reject';
+ if(/(?:限|僅限|資格).*?(?:大專校院|大專生|大學生|研究生)|(?:大專校院|大專生|大學生|研究生|碩博士)(?:在學|限定|始得|方可)/.test(s)&&!hasHighSchool)return'reject';
+ if(/本校學生|高中生|高中職|高級中等|國高中|中學生|青少年/.test(s))return'pass';
+ if(/18\s*歲以上|年滿\s*18|青年/.test(s))return'review';
+ return'review'
+}
 function finalizeDiagnostics(items,diag={}){const out=[],d={rawCount:0,identifiedCount:items.length,eligibilityPass:0,eligibilityReview:0,eligibilityRejected:0,unexpiredCount:0,expiredCount:0,noDeadlineCount:0,finalCount:0,excludedKeyword:0,notOpportunity:0,parseErrors:0,...diag};for(const o of items){const dec=eligibilityDecision([o.title,o.eligibility,o.reason].join(' '));if(dec==='reject'){d.eligibilityRejected++;continue}if(dec==='pass')d.eligibilityPass++;else d.eligibilityReview++;if(!o.deadline)d.noDeadlineCount++;else if(o.deadline<TODAY){d.expiredCount++;continue}else d.unexpiredCount++;out.push(o)}d.finalCount=out.length;return{items:out,diagnostics:d}}
 function diagnosticReason(d){if(!d)return'';const parts=[];if(d.notOpportunity)parts.push(`非機會 ${d.notOpportunity}`);if(d.excludedKeyword)parts.push(`排除公告 ${d.excludedKeyword}`);if(d.eligibilityRejected)parts.push(`高三資格不符 ${d.eligibilityRejected}`);if(d.expiredCount)parts.push(`已截止 ${d.expiredCount}`);if(d.noDeadlineCount)parts.push(`期限待確認 ${d.noDeadlineCount}`);if(d.parseErrors)parts.push(`解析異常 ${d.parseErrors}`);return parts.join('｜')}
 async function fetchReader(url,timeout=12000){const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),timeout);try{const r=await fetch(READER_PREFIX+url,{signal:ctrl.signal,headers:{Accept:'text/plain'}});if(!r.ok){const e=new Error('HTTP '+r.status);e.status=r.status;const ra=r.headers?.get?.('retry-after');if(ra)e.retryAfter=ra;throw e}return await r.text()}finally{clearTimeout(timer)}}
@@ -989,6 +1025,20 @@ function calcRate(start,end){
  }));
  return {due,done,rate:due?Math.round(done/due*100):null}
 }
+function homeOpportunityEligible(o){
+ const text=cleanText([o?.title,o?.eligibility,o?.reason].join(' '));
+ if(eligibilityDecision(text)==='reject')return false;
+ const hasHighSchool=/(高中|高中職|高級中等|國高中|中學生)/.test(text);
+ if(/(大專生|大學生|大專校院學生|研究生|碩士生|博士生|碩博士)/.test(text)&&!hasHighSchool)return false;
+ return true
+}
+function upcomingWhen(x){
+ const n=Math.max(0,daysUntil(x.date));
+ const deadline=x.kind==='deadline'||x.kind==='opp';
+ if(n===0)return deadline?'今天截止':'今天';
+ if(n===1)return deadline?'明天截止':'明天';
+ return `剩餘 ${n} 天`
+}
 function activeSubgoals(){return DB.goals.filter(g=>g.level===3&&g.startDate&&g.endDate&&between(TODAY,g.startDate,g.endDate)).length}
 function datePlus(ds,n){const d=parseDate(ds);d.setDate(d.getDate()+n);return localISO(d)}
 function futurePressureDetails(days=7){
@@ -999,7 +1049,8 @@ function futurePressureDetails(days=7){
  }));
  const deadlines=activeOpportunities().filter(o=>{
   const n=daysUntil(o.deadline);
-  return n>=0&&n<days
+  return homeOpportunityEligible(o)
+   &&n>=0&&n<days
    &&!DB.opportunityState.dismissed.includes(o.id)
    &&!DB.opportunityState.converted.includes(o.id);
  }).length;
@@ -1012,7 +1063,15 @@ function futurePressureDetails(days=7){
  return {tasks,deadlines,events,total:tasks+deadlines+events}
 }
 function futurePressure(days=7){return futurePressureDetails(days).total}
-function highOpportunityCount(){return activeOpportunities().filter(o=>scoreOf(o)>=80&&daysUntil(o.deadline)>=0&&!DB.opportunityState.dismissed.includes(o.id)&&!DB.opportunityState.converted.includes(o.id)).length}
+function highOpportunityCount(){
+ return activeOpportunities().filter(o=>
+  homeOpportunityEligible(o)
+  &&scoreOf(o)>=80
+  &&daysUntil(o.deadline)>=0
+  &&!DB.opportunityState.dismissed.includes(o.id)
+  &&!DB.opportunityState.converted.includes(o.id)
+ ).length
+}
 function go(page){$$('.page').forEach(p=>p.classList.toggle('active',p.dataset.page===page));$$('[data-nav]').forEach(b=>b.classList.toggle('active',b.dataset.nav===page));window.scrollTo({top:0,behavior:'smooth'});if(page==='calendar')renderCalendar();if(page==='system')renderSystem();if(page==='activities'||page==='scholarships')maybeAutoRefresh()}
 $$('[data-nav]').forEach(b=>b.onclick=()=>go(b.dataset.nav));$$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
 function renderPhase(){const p=currentPhase();$('#phaseName').textContent=p.name;$('#phaseFocus').textContent=p.focus;$('#phaseDesc').textContent=p.desc;const total=daysBetween(TRIAL_START,TRIAL_END)+1,elapsed=Math.max(0,Math.min(total,daysBetween(TRIAL_START,TODAY)+1)),pct=Math.round(elapsed/total*100);$('#yearMeter').style.width=pct+'%';$('#yearProgressText').textContent=`一年試行第 ${elapsed} / ${total} 天｜時間進度 ${pct}%`;$('#todayDateLabel').textContent=`${TODAY}｜${p.name}`}
@@ -1071,8 +1130,37 @@ function renderAnalysis(){
  if(near.length)items.push({title:'近期機會期限',text:`未來 7 日有 ${near.length} 個候選機會截止；只有本人確認後才會轉入正式計畫。`});
  $('#analysisList').innerHTML=items.map(i=>`<div class="analysis-item ${i.risk?'risk':i.good?'goodbox':''}"><b>${esc(i.title)}</b><p>${esc(i.text)}</p></div>`).join('')
 }
-function upcomingItems(){let out=[];DB.goals.filter(g=>g.level===3&&g.startDate&&g.endDate).forEach(g=>{const s=daysUntil(g.startDate),e=daysUntil(g.endDate);if(s>=0&&s<=30)out.push({date:g.startDate,title:'子任務開始｜'+g.title,kind:'subgoal'});if(e>=0&&e<=30)out.push({date:g.endDate,title:'子任務截止｜'+g.title,kind:'deadline'})});DB.events.filter(e=>e.date>=TODAY).forEach(e=>out.push({date:e.date,title:e.title,kind:'personal'}));Object.entries(FIXED_EVENTS).forEach(([date,es])=>es.forEach(e=>{if(date>=TODAY)out.push({date,title:e.title,kind:e.kind})}));activeOpportunities().forEach(o=>{if(o.deadline>=TODAY&&!DB.opportunityState.dismissed.includes(o.id)&&!DB.opportunityState.converted.includes(o.id))out.push({date:o.deadline,title:'候選截止｜'+o.title,kind:'opp'})});return out.sort((a,b)=>a.date.localeCompare(b.date)).slice(0,8)}
-function renderUpcoming(){const list=upcomingItems();$('#upcomingList').innerHTML=list.length?list.map(x=>`<div class="todo"><div class="todo-main"><b>${esc(x.title)}</b><span>${x.date}｜剩餘 ${Math.max(0,daysUntil(x.date))} 天</span></div><span class="badge ${x.kind==='deadline'||x.kind==='opp'?'red':x.kind==='personal'?'gold':'blue'}">${x.kind==='personal'?'個人':x.kind==='opp'?'機會':'節點'}</span></div>`).join(''):'<div class="empty">目前沒有近期節點。</div>'}
+function upcomingItems(){
+ let out=[];
+ DB.goals.filter(g=>g.level===3&&g.startDate&&g.endDate).forEach(g=>{
+  const s=daysUntil(g.startDate),e=daysUntil(g.endDate);
+  if(s>=0&&s<=30)out.push({date:g.startDate,title:'子任務開始｜'+g.title,kind:'subgoal'});
+  if(e>=0&&e<=30)out.push({date:g.endDate,title:'子任務截止｜'+g.title,kind:'deadline'})
+ });
+ DB.events.filter(e=>e.date>=TODAY).forEach(e=>out.push({date:e.date,title:e.title,kind:'personal'}));
+ Object.entries(FIXED_EVENTS).forEach(([date,es])=>es.forEach(e=>{
+  if(date>=TODAY)out.push({date,title:e.title,kind:e.kind})
+ }));
+ activeOpportunities().forEach(o=>{
+  if(homeOpportunityEligible(o)
+    &&o.deadline>=TODAY
+    &&!DB.opportunityState.dismissed.includes(o.id)
+    &&!DB.opportunityState.converted.includes(o.id)){
+   out.push({date:o.deadline,title:'候選截止｜'+o.title,kind:'opp'})
+  }
+ });
+ return out.sort((a,b)=>a.date.localeCompare(b.date)).slice(0,8)
+}
+function renderUpcoming(){
+ const list=upcomingItems();
+ $('#upcomingList').innerHTML=list.length
+  ?list.map(x=>{
+   const n=Math.max(0,daysUntil(x.date));
+   const urgent=n===0&&(x.kind==='deadline'||x.kind==='opp');
+   return `<div class="todo ${urgent?'upcoming-urgent-v1042':''}"><div class="todo-main"><b>${esc(x.title)}</b><span>${x.date}｜${upcomingWhen(x)}</span></div><span class="badge ${x.kind==='deadline'||x.kind==='opp'?'red':x.kind==='personal'?'gold':'blue'}">${x.kind==='personal'?'個人':x.kind==='opp'?'機會':'節點'}</span></div>`
+  }).join('')
+  :'<div class="empty">目前沒有近期節點。</div>'
+}
 function renderGoals(){const q=$('#goalSearch').value.trim().toLowerCase();const roots=DB.goals.filter(g=>!g.parentId);$('#goalTree').innerHTML=roots.length?roots.map(goalHtml).join(''):'<div class="empty">尚未建立一年目標。</div>';bindGoalActions();if(q){$$('.goal-node').forEach(n=>{n.style.display=n.textContent.toLowerCase().includes(q)?'block':'none'});$$('.children').forEach(c=>c.classList.remove('hidden'))}}
 function goalHtml(g){const kids=childrenOf(g.id),tasks=DB.tasks.filter(t=>t.goalId===g.id),p=goalProgress(g.id),has=kids.length||tasks.length;const time=g.level===3&&g.startDate&&g.endDate?`｜${g.startDate}～${g.endDate}｜${subgoalStatus(g)}`:'';return `<div class="goal-node level-${g.level}" data-node="${g.id}"><div class="goal-head clickable"><div class="goal-icon">${g.level}</div><div class="goal-title"><b>${esc(g.title)}</b><span>${g.level===1?'一年目標':g.level===2?'任務目標':'子任務'}${time}${g.desc?'｜'+esc(g.desc):''}</span></div><div class="progress"><span style="width:${p}%"></span></div><span class="mini">${p}%</span><div class="goal-tools"><button class="btn ghost small" data-edit-goal="${g.id}">編輯</button>${g.level<3?`<button class="btn secondary small" data-add-child="${g.id}">＋</button>`:`<button class="btn gold small" data-add-task="${g.id}">＋任務</button>`}</div></div>${has?`<div class="children">${kids.map(goalHtml).join('')}${tasks.map(taskHtml).join('')}</div>`:''}</div>`}
 function taskHtml(t){const p=taskRate(t),g=subgoalForTask(t);return `<div class="goal-node level-4" data-task-node="${t.id}"><div class="goal-head"><div class="goal-icon">4</div><div class="goal-title"><b>${esc(t.title)}</b><span>具體實現方式｜${esc(t.subject||'未分類')}｜${scheduleText(t)}${g?`｜受子任務 ${g.startDate}～${g.endDate} 限制`:''}</span></div><div class="progress"><span style="width:${p}%"></span></div><span class="mini">${p}%</span><div class="goal-tools"><button class="btn ghost small" data-edit-task="${t.id}">編輯</button></div></div></div>`}
