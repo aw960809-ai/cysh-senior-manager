@@ -106,7 +106,7 @@ const CYSH_PARSER_VERSION=6;
 const SOURCE_COOLDOWN_MS=10*60*1000, RATE_LIMIT_COOLDOWN_MS=20*60*1000;
 const REFRESH_TOTAL_TIMEOUT_MS=45*1000, SOURCE_TIMEOUT_MS={cysh:18*1000,youth:12*1000,moe:10*1000};
 const REFRESH_SLOW_HINT_MS=15*1000, REFRESH_DEEP_HINT_MS=30*1000;
-const APP_BUILD='v10.1-20260908-auto-update';
+const APP_BUILD='v10.1.1-20260908-youth-cleanup';
 const REMOTE_PUSH_HORIZON_DAYS=35;
 let remotePushSyncTimer=null,remotePushSyncBusy=false,remotePushReady=false;
 const TRIAL_START='2026-09-01',TRIAL_END='2027-08-31';
@@ -179,6 +179,36 @@ function saveSafetySnapshot(raw,reason='自動保全'){try{const payload=typeof 
 function loadDB(){try{const raw=localStorage.getItem(STORE_KEY);if(!raw)return seedData();const d=JSON.parse(raw);if(d.schemaVersion!==SCHEMA_VERSION){saveSafetySnapshot(raw,`Schema v${d.schemaVersion||'舊版'} → v${SCHEMA_VERSION}`);const m=migrate(d);m.dataProtection={...(m.dataProtection||{}),migratedFrom:d.schemaVersion||null,migratedAt:new Date().toISOString()};return m}return d}catch(e){return seedData()}}
 function normalizeLoadedRuntimeState(d){
  if(!d||typeof d!=='object')return d;
+
+ const malformedYouth=o=>{
+  if(String(o?.sourceId||'')!=='youthfirst')return false;
+  const text=[o?.title,o?.org].join(' ');
+  return /!\[[^\]]*\]\(|\[[^\]]+\]\(https?:\/\/|https?:\/\/|(?:^|\s)Image(?:\s*\d+)?\b/i.test(text);
+ };
+
+ if(Array.isArray(d.opportunities)){
+  const dirty=d.opportunities.filter(malformedYouth);
+
+  if(dirty.length){
+   d.opportunityArchive=Array.isArray(d.opportunityArchive)?d.opportunityArchive:[];
+   const known=new Set(d.opportunityArchive.map(x=>x.id));
+   const at=new Date().toISOString();
+
+   dirty.forEach(o=>{
+    if(!known.has(o.id)){
+     d.opportunityArchive.unshift({
+      ...o,
+      retiredAt:at,
+      retireReason:'舊版青年來源 Markdown 解析污染已自動清理'
+     });
+    }
+   });
+
+   d.opportunities=d.opportunities.filter(o=>!malformedYouth(o));
+   d.opportunityArchive=d.opportunityArchive.slice(0,200);
+  }
+ }
+
  d.sourceState=d.sourceState||{};
  const now=Date.now();
  Object.entries(d.sourceState).forEach(([id,st])=>{
