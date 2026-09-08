@@ -524,68 +524,250 @@ def parse_link_source(source: dict, html: str, detail_limit: int = 16) -> list[d
 
 
 
-def parse_cysh(source: dict, html: str, detail_limit: int = 24) -> tuple[list[dict], dict]:
-    """Parse CYSH category pages, detail bodies and selected attachments."""
-    soup=BeautifulSoup(html,"html.parser");is_scholar=source["id"]=="cysh-scholarship";raw_posts=[];seen=set();excluded=0
-    for a in soup.find_all("a",href=True):
-        url=urljoin(source["url"],a.get("href") or "")
-        if "/p/406-1008-" not in url:continue
-        title=clean(a.get_text(" ",strip=True))
-        if len(title)<4:continue
-        key=f"{norm_title(title)}|{url}"
-        if key in seen:continue
-        seen.add(key);parent_text=clean(a.parent.get_text(" ",strip=True) if a.parent else title);published=find_published(parent_text);raw_posts.append((title,url,published));excluded+=1 if EXCLUDE_RE.search(title) else 0
-    identified=[x for x in raw_posts if not EXCLUDE_RE.search(x[0]) and (is_scholar or infer_type(x[0],""))]
-    out=[];parse_errors=detail_fetched=detail_unavailable=0;deadline_parsed=event_date_parsed=eligibility_parsed=location_parsed=organizer_parsed=amount_parsed=0;attachment_links=attachment_fetched=attachment_used=attachment_errors=0;attachment_budget=10 if is_scholar else 6
-    for title,url,published in identified[:detail_limit]:
-        detail_html="";body=title;detail_ok=False
-        try:
-            detail_html=fetch(url,18);detail_soup=BeautifulSoup(detail_html,"html.parser");body=soup_lines(detail_soup);detail_fetched+=1;detail_ok=True
-        except Exception:
-            parse_errors+=1;detail_unavailable+=1;detail_soup=None
-        kind="scholarship" if is_scholar else infer_type(title,body)
-        if not kind:continue
-        fields=deep_fields(title+"\n"+body,kind,date.fromisoformat(published) if published else TODAY);used=[]
-        attachments=extract_attachment_links(detail_soup,url) if detail_soup else [];attachment_links+=len(attachments)
-        if attachments and needs_deep_attachment(fields,kind) and attachment_budget>0:
-            deep=title+"\n"+body
-            for name,att_url,_ in attachments[:2]:
-                if attachment_budget<=0:break
-                attachment_budget-=1
+def extract_markdown_links(text: str, base_url: str) -> list[tuple[str, str, str | None]]:
+    out: list[tuple[str, str, str | None]] = []
+    seen: set[str] = set()
+    src = str(text or "")
+    link_re = re.compile(r"\[([^\]\n]{3,220})\]\(([^)\s]+)(?:\s+[\"'][^\"']*[\"'])?\)")
+    for m in link_re.finditer(src):
+        title = clean(m.group(1))
+        url = urljoin(base_url, m.group(2).strip("<>"))
+        if not title or not url or url in seen:
+            continue
+        seen.add(url)
+        before = src[max(0, m.start()-220):m.start()]
+        dates = re.findall(r"20\d{2}[-/.]\d{1,2}[-/.]\d{1,2}", before)
+        published = dates[-1].replace("/", "-").replace(".", "-") if dates else None
+        out.append((title, url, published))
+    return out
+
+
+def extract_cysh_listing_posts(text: str, source: dict) -> list[tuple[str, str, str | None]]:
+    src = str(text or "")
+    by_key: dict[str, tuple[str, str, str | None]] = {}
+
+    def push(published: str | None, title: str, url: str = "") -> None:
+        title2 = re.sub(r"^[•·▪▫★☆◆◇▶►\-–—\s]+", "", clean(title))
+        if not title2 or len(title2) < 4 or len(title2) > 240:
+            return
+        if re.fullmatch(r"校園訊息|獎助學金|網站導覽|Google地圖|地理位置圖|回到頂部|登入成功|共\d+頁|上一頁|下一頁", title2):
+            return
+        pub = (published or TODAY.isoformat()).replace("/", "-").replace(".", "-")
+        full = urljoin(source["url"], url) if url else ""
+        key = f"{pub}|{norm_title(title2)}"
+        old = by_key.get(key)
+        if old and not old[1] and full:
+            by_key[key] = (title2, full, pub)
+        elif not old:
+            by_key[key] = (title2, full, pub)
+
+    dated_link = re.compile(r"(20\d{2}[-/.]\d{1,2}[-/.]\d{1,2})[^\n]{0,120}?\[([^\]\n]{3,220})\]\(([^)\s]+)(?:\s+[\"'][^\"']*[\"'])?\)")
+    for m in dated_link.finditer(src):
+        push(m.group(1), m.group(2), m.group(3))
+
+    for title, url, published in extract_markdown_links(src, source["url"]):
+        if "/p/406-1008-" in url:
+            push(published, title, url)
+
+    line_re = re.compile(r"(?:^|\n)\s*(20\d{2}[-/.]\d{1,2}[-/.]\d{1,2})\s+(?!https?:)([^\n]{4,260})")
+    for m in line_re.finditer(src):
+        tail = clean(m.group(2))
+        lm = re.match(r"^\[([^\]]+)\]\(([^)]+)\)", tail)
+        if lm:
+            push(m.group(1), lm.group(1), lm.group(2))
+        else:
+            push(m.group(1), re.sub(r"\[[^\]]*\]\([^)]*\)", " ", tail), "")
+
+    # HTML fallback for direct-site responses.
+    soup = BeautifulSoup(src, "html.parser")
+    for a in soup.find_all("a", href=True):
+        url = urljoin(source["url"], a.get("href") or "")
+        if "/p/406-1008-" not in url:
+            continue
+        title = clean(a.get_text(" ", strip=True))
+        parent_text = clean(a.parent.get_text(" ", strip=True) if a.parent else title)
+        push(find_published(parent_text), title, url)
+
+    return sorted(by_key.values(), key=lambda x: str(x[2] or ""), reverse=True)
+
+
+def extract_attachment_links_text(text: str, base_url: str) -> list[tuple[str, str, int]]:
+    out: list[tuple[str, str, int]] = []
+    seen: set[str] = set()
+    for name, url, _ in extract_markdown_links(text, base_url):
+        ext = Path(urlparse(url).path).suffix.lower()
+        priority = (40 if re.search(r"簡章|要點|辦法|公告|計畫|申請|獎學金|補助|規定", name) else 0) + (30 if ext == ".pdf" else 18 if ext in {".doc", ".docx", ".odt"} else 0)
+        if priority < 18 or url in seen:
+            continue
+        seen.add(url)
+        out.append((name, url, priority))
+    # HTML fallback.
+    soup = BeautifulSoup(text, "html.parser")
+    for name, url, priority in extract_attachment_links(soup, base_url):
+        if url in seen:
+            continue
+        seen.add(url)
+        out.append((name, url, priority))
+    return sorted(out, key=lambda x: x[2], reverse=True)[:6]
+
+
+def parse_cysh(source: dict, content: str, detail_limit: int = 24) -> tuple[list[dict], dict]:
+    """Parse CYSH category pages from reader markdown or HTML, then detail pages/attachments."""
+    is_scholar = source["id"] == "cysh-scholarship"
+    raw_posts = extract_cysh_listing_posts(content, source)
+    excluded = sum(1 for title, _, _ in raw_posts if EXCLUDE_RE.search(title))
+    identified = [x for x in raw_posts if not EXCLUDE_RE.search(x[0]) and (is_scholar or infer_type(x[0], ""))]
+
+    out: list[dict] = []
+    parse_errors = detail_fetched = detail_unavailable = 0
+    deadline_parsed = event_date_parsed = eligibility_parsed = location_parsed = organizer_parsed = amount_parsed = 0
+    attachment_links = attachment_fetched = attachment_used = attachment_errors = 0
+    attachment_budget = 10 if is_scholar else 6
+
+    for title, url, published in identified[:detail_limit]:
+        body = title
+        detail_ok = False
+        detail_text = ""
+        if url:
+            try:
+                detail_text = fetch_reader(url, 18, 2)
+                body = detail_text
+                detail_fetched += 1
+                detail_ok = True
+            except Exception:
+                parse_errors += 1
+                detail_unavailable += 1
+
+        kind = "scholarship" if is_scholar else infer_type(title, body)
+        if not kind:
+            continue
+
+        ref = date.fromisoformat(published) if published else TODAY
+        deep = (title + "\n" + body)[:120000]
+        fields = deep_fields(deep, kind, ref)
+        used: list[str] = []
+        attachments = extract_attachment_links_text(detail_text, url) if detail_text and url else []
+        attachment_links += len(attachments)
+
+        if attachments and needs_deep_attachment(fields, kind) and attachment_budget > 0:
+            for name, att_url, _ in attachments[:2]:
+                if attachment_budget <= 0:
+                    break
+                attachment_budget -= 1
                 try:
-                    att_text=fetch_reader(att_url,25);attachment_fetched+=1
-                    if len(att_text)>40:
-                        deep=(deep+"\n附件｜"+name+"\n"+att_text)[:120000];used.append(name);fields=deep_fields(deep,kind,date.fromisoformat(published) if published else TODAY)
-                        if not needs_deep_attachment(fields,kind):break
-                except Exception:attachment_errors+=1
-            if used:attachment_used+=1;body=deep
-        fallback="國立嘉義高級中學獎助學金公告／轉知" if is_scholar else "國立嘉義高級中學公告／轉知"
-        org=extract_organizer(body,fallback)
-        item={"id":stable_id(source["id"],url,title),"type":kind,"title":title,"org":org,"region":infer_region(title+" "+body),"deadline":fields["deadline"],"eligibility":fields["eligibility"],"goal":infer_goal(title+" "+body,kind),"reason":"已解析嘉中公告正文與附件；實際資格與期限仍以官方文件為準。" if used else ("已解析嘉中詳細公告；系統已抽取可辨識欄位。" if detail_ok else "嘉中詳細頁暫未取得，保留待確認。"),"url":url,"sourceUrl":url,"sourceId":source["id"],"sourceName":source["name"],"published":published,"firstSeen":NOW,"lastSeen":NOW,"updatedAt":NOW,"missCount":0,"detailParsed":detail_ok,"attachmentParsed":bool(used),"attachmentNames":used,"deadlineConfidence":"attachment" if fields["deadline"] and used else "detail" if fields["deadline"] and detail_ok else "unknown"}
-        if kind=="scholarship":item["amount"]=fields["amount"]
-        else:item["date"]=fields["date"];item["location"]=fields["location"];item["cost"]="費用待確認"
-        item["scores"]=scores_for(item)
-        if item.get("deadline"):deadline_parsed+=1
-        if kind=="activity" and item.get("date") not in (None,"詳官方公告","—"):event_date_parsed+=1
-        if parsed_eligibility(item.get("eligibility", "")):eligibility_parsed+=1
-        if kind=="activity" and item.get("location") not in (None,"詳官方公告"):location_parsed+=1
-        if org!=fallback:organizer_parsed+=1
-        if kind=="scholarship" and item.get("amount") not in (None,"依官方簡章"):amount_parsed+=1
+                    att_text = fetch_reader(att_url, 20, 2)
+                    attachment_fetched += 1
+                    if len(att_text) > 40:
+                        deep = (deep + "\n附件｜" + name + "\n" + att_text)[:120000]
+                        used.append(name)
+                        fields = deep_fields(deep, kind, ref)
+                        if not needs_deep_attachment(fields, kind):
+                            break
+                except Exception:
+                    attachment_errors += 1
+
+        if used:
+            attachment_used += 1
+
+        fallback = "國立嘉義高級中學獎助學金公告／轉知" if is_scholar else "國立嘉義高級中學公告／轉知"
+        org = extract_organizer(deep, fallback)
+        item = {
+            "id": stable_id(source["id"], url or source["url"], title),
+            "type": kind,
+            "title": title,
+            "org": org,
+            "region": infer_region(title + " " + deep[:14000], source.get("region", "校內")),
+            "deadline": fields["deadline"],
+            "eligibility": fields["eligibility"],
+            "goal": infer_goal(title + " " + deep[:14000], kind),
+            "reason": "已解析嘉中公告正文與附件；實際資格與期限仍以官方文件為準。" if used else ("已解析嘉中詳細公告；系統已抽取可辨識欄位。" if detail_ok else "嘉中詳細頁暫未取得，保留待確認。"),
+            "url": url or source["url"],
+            "sourceUrl": url or source["url"],
+            "sourceId": source["id"],
+            "sourceName": source["name"],
+            "published": published,
+            "firstSeen": NOW,
+            "lastSeen": NOW,
+            "updatedAt": NOW,
+            "missCount": 0,
+            "detailParsed": detail_ok,
+            "attachmentParsed": bool(used),
+            "attachmentNames": used,
+            "deadlineConfidence": "attachment" if fields["deadline"] and used else "detail" if fields["deadline"] and detail_ok else "unknown",
+        }
+        if kind == "scholarship":
+            item["amount"] = fields["amount"]
+        else:
+            item["date"] = fields["date"]
+            item["location"] = fields["location"]
+            item["cost"] = "費用待確認"
+
+        item["scores"] = scores_for(item)
+        if item.get("deadline"):
+            deadline_parsed += 1
+        if kind == "activity" and item.get("date") not in (None, "詳官方公告", "—"):
+            event_date_parsed += 1
+        if parsed_eligibility(item.get("eligibility", "")):
+            eligibility_parsed += 1
+        if kind == "activity" and item.get("location") not in (None, "詳官方公告"):
+            location_parsed += 1
+        if org != fallback:
+            organizer_parsed += 1
+        if kind == "scholarship" and item.get("amount") not in (None, "依官方簡章"):
+            amount_parsed += 1
         out.append(item)
-    diagnostics={"rawCount":len(raw_posts),"identifiedCount":len(identified),"eligibilityPass":0,"eligibilityReview":0,"eligibilityRejected":0,"unexpiredCount":0,"expiredCount":0,"noDeadlineCount":0,"finalCount":0,"excludedKeyword":excluded,"notOpportunity":max(0,len(raw_posts)-len(identified)-excluded),"parseErrors":parse_errors,"parserVersion":5,"detailFetched":detail_fetched,"detailUnavailable":detail_unavailable,"detailFetchErrors":parse_errors,"deadlineParsed":deadline_parsed,"eventDateParsed":event_date_parsed,"eligibilityParsed":eligibility_parsed,"locationParsed":location_parsed,"organizerParsed":organizer_parsed,"amountParsed":amount_parsed,"attachmentLinks":attachment_links,"attachmentFetched":attachment_fetched,"attachmentUsed":attachment_used,"attachmentErrors":attachment_errors}
-    final=[]
+
+    diagnostics = {
+        "rawCount": len(raw_posts),
+        "identifiedCount": len(identified),
+        "eligibilityPass": 0,
+        "eligibilityReview": 0,
+        "eligibilityRejected": 0,
+        "unexpiredCount": 0,
+        "expiredCount": 0,
+        "noDeadlineCount": 0,
+        "finalCount": 0,
+        "excludedKeyword": excluded,
+        "notOpportunity": max(0, len(raw_posts) - len(identified) - excluded),
+        "parseErrors": parse_errors,
+        "parserVersion": 5,
+        "detailFetched": detail_fetched,
+        "detailUnavailable": detail_unavailable,
+        "detailFetchErrors": parse_errors,
+        "deadlineParsed": deadline_parsed,
+        "eventDateParsed": event_date_parsed,
+        "eligibilityParsed": eligibility_parsed,
+        "locationParsed": location_parsed,
+        "organizerParsed": organizer_parsed,
+        "amountParsed": amount_parsed,
+        "attachmentLinks": attachment_links,
+        "attachmentFetched": attachment_fetched,
+        "attachmentUsed": attachment_used,
+        "attachmentErrors": attachment_errors,
+    }
+
+    final: list[dict] = []
     for item in out:
-        decision=eligibility_decision(item)
-        if decision=="reject":diagnostics["eligibilityRejected"]+=1;continue
-        diagnostics["eligibilityPass" if decision=="pass" else "eligibilityReview"]+=1;dl=item.get("deadline")
-        if not dl:diagnostics["noDeadlineCount"]+=1
+        decision = eligibility_decision(item)
+        if decision == "reject":
+            diagnostics["eligibilityRejected"] += 1
+            continue
+        diagnostics["eligibilityPass" if decision == "pass" else "eligibilityReview"] += 1
+        dl = item.get("deadline")
+        if not dl:
+            diagnostics["noDeadlineCount"] += 1
         else:
             try:
-                if date.fromisoformat(dl)<TODAY:diagnostics["expiredCount"]+=1;continue
-                diagnostics["unexpiredCount"]+=1
-            except ValueError:diagnostics["noDeadlineCount"]+=1
+                if date.fromisoformat(dl) < TODAY:
+                    diagnostics["expiredCount"] += 1
+                    continue
+                diagnostics["unexpiredCount"] += 1
+            except ValueError:
+                diagnostics["noDeadlineCount"] += 1
         final.append(item)
-    diagnostics["finalCount"]=len(final);return final,diagnostics
+
+    diagnostics["finalCount"] = len(final)
+    return final, diagnostics
 
 def parse_moe(source: dict, html: str) -> list[dict]:
     soup = BeautifulSoup(html, "html.parser")
@@ -615,7 +797,7 @@ def parse_youthfirst(source: dict, html: str) -> tuple[list[dict], dict]:
             title=v;break
         if not title:malformed+=1;continue
         if EXCLUDE_RE.search(title):excluded+=1;continue
-        kind=infer_type(title,org) or "activity";item={"id":stable_id(source["id"],source["url"],title),"type":kind,"title":title,"org":org or "教育部青年發展署","region":infer_region(title+" "+org),"deadline":deadline,"eligibility":"青年資源；請開啟來源確認年齡與身分限制","goal":infer_goal(title+" "+org,kind),"reason":"由青年發展署青年第一讚自動取得，申請期限由列表直接解析。","url":source["url"],"sourceUrl":source["url"],"sourceId":source["id"],"sourceName":source["name"],"firstSeen":NOW,"lastSeen":NOW,"updatedAt":NOW,"missCount":0};item["scores"]=scores_for(item);out.append(item)
+        kind=infer_type(title,org) or "activity";item={"id":stable_id(source["id"],source["url"],title),"type":kind,"title":title,"org":org or "教育部青年發展署","region":infer_region(title+" "+org, source.get("region","全國")),"deadline":deadline,"eligibility":"青年資源；請開啟來源確認年齡與身分限制","goal":infer_goal(title+" "+org,kind),"reason":"由青年發展署青年第一讚自動取得，申請期限由列表直接解析。","url":source["url"],"sourceUrl":source["url"],"sourceId":source["id"],"sourceName":source["name"],"firstSeen":NOW,"lastSeen":NOW,"updatedAt":NOW,"missCount":0};item["scores"]=scores_for(item);out.append(item)
     diagnostics={"rawCount":sum(1 for x in lines if "申請期限" in x),"identifiedCount":len(out),"eligibilityPass":0,"eligibilityReview":0,"eligibilityRejected":0,"unexpiredCount":0,"expiredCount":0,"noDeadlineCount":0,"finalCount":0,"excludedKeyword":excluded,"notOpportunity":0,"parseErrors":malformed,"deadlineParsed":sum(1 for x in out if x.get("deadline"))}
     final=[]
     for item in out:
@@ -731,7 +913,10 @@ def run() -> int:
             time.sleep(0.8)
         started = time.monotonic()
         try:
-            html = fetch(source["url"])
+            if source["kind"] == "cysh":
+                html = fetch_reader(source["url"], 25, 3)
+            else:
+                html = fetch(source["url"])
             if source["kind"] == "moe":
                 parsed_items = parse_moe(source, html)
                 items, diagnostics = filter_and_diagnose(html, parsed_items)
@@ -791,6 +976,9 @@ def selftest() -> int:
     assert extract_scholarship_deadline(scholar, date(2026,2,9)) == "2026-03-11"
     assert extract_scholarship_amount(scholar) == "多項獎助｜NT$5,000～NT$35,000（依項目）"
     assert "家庭貧困" in extract_scholarship_eligibility(scholar)
+    cysh_sample = """2026-09-08 [校外競賽活動公告](https://www.cysh.cy.edu.tw/p/406-1008-12345,r12.php)\n2026-09-07 [115學年度測試獎學金](https://www.cysh.cy.edu.tw/p/406-1008-12346,r18.php)"""
+    cysh_posts = extract_cysh_listing_posts(cysh_sample, SOURCES[0])
+    assert len(cysh_posts) == 2 and cysh_posts[0][1].startswith("https://www.cysh.cy.edu.tw/p/406-1008-")
     staff = {"title":"子女教育補助費","eligibility":"資格摘要｜公教人員子女相關補助","reason":""}
     assert eligibility_decision(staff) == "reject"
     expired = dict(item, id="expired", deadline=(TODAY-timedelta(days=1)).isoformat())
