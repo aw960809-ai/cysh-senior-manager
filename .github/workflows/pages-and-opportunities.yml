@@ -1,0 +1,83 @@
+name: Deploy site and refresh opportunities
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    # GitHub cron is UTC: 00:15 / 12:15 = Taiwan 08:15 / 20:15.
+    - cron: '15 0,12 * * *'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+
+      - name: Install parser dependencies
+        run: python -m pip install -r scripts/requirements.txt
+
+      - name: Parser self-test
+        run: python scripts/update_opportunities.py --selftest
+
+      - name: Refresh activities and scholarships
+        run: python scripts/update_opportunities.py
+
+      - name: Save refreshed background data to repository
+        shell: bash
+        run: |
+          if git diff --quiet -- data/opportunities.json; then
+            echo "No opportunity data changes."
+          else
+            git config user.name "cysh-opportunity-bot"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add data/opportunities.json
+            git commit -m "chore: refresh activity and scholarship data"
+            git push
+          fi
+
+      - name: Set up Pages
+        uses: actions/configure-pages@v5
+
+      - name: Build static site artifact
+        shell: bash
+        run: |
+          rm -rf _site
+          mkdir -p _site/data
+          cp index.html _site/index.html
+          cp data/opportunities.json _site/data/opportunities.json
+          touch _site/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
