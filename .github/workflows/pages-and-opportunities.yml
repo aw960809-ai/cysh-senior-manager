@@ -61,8 +61,12 @@ jobs:
         shell: bash
         run: |
           rm -rf _site
-          mkdir -p _site/data
+          mkdir -p _site/data _site/icons
           cp index.html _site/index.html
+          cp manifest.webmanifest _site/manifest.webmanifest
+          cp sw.js _site/sw.js
+          cp icons/icon-192.png _site/icons/icon-192.png
+          cp icons/icon-512.png _site/icons/icon-512.png
           cp data/opportunities.json _site/data/opportunities.json
           touch _site/.nojekyll
 
