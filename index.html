@@ -573,6 +573,38 @@ input[type="checkbox"],input[type="radio"]{accent-color:var(--green,#315f50)!imp
   .home-action-wide-v1043{grid-column:auto!important}
 }
 
+
+/* CYSH ZERO-CONFIG PUSH V10.5 */
+.push-advanced-v105{
+  margin-top:9px;
+  border-top:1px solid var(--line,#dfe5de);
+  padding-top:7px;
+}
+.push-advanced-v105>summary{
+  cursor:pointer;
+  list-style:none;
+  color:var(--muted,#6e7c76);
+  font-size:9px;
+  font-weight:800;
+  user-select:none;
+}
+.push-advanced-v105>summary::-webkit-details-marker{display:none}
+.push-advanced-v105>summary::before{content:'＋ ';color:var(--green,#315f50)}
+.push-advanced-v105[open]>summary::before{content:'－ '}
+.push-advanced-v105 .field{margin-top:8px}
+#requestNotifyPermission{
+  min-width:178px;
+}
+#requestNotifyPermission:not(:disabled){
+  box-shadow:0 6px 18px rgba(49,95,80,.14);
+}
+@media(max-width:620px){
+ #requestNotifyPermission{
+  width:100%;
+  min-width:0;
+ }
+}
+
 </style>
 </head>
 <body>
@@ -642,8 +674,9 @@ const CYSH_PARSER_VERSION=8;
 const SOURCE_COOLDOWN_MS=10*60*1000, RATE_LIMIT_COOLDOWN_MS=20*60*1000;
 const REFRESH_TOTAL_TIMEOUT_MS=45*1000, SOURCE_TIMEOUT_MS={cysh:18*1000,youth:12*1000,moe:10*1000};
 const REFRESH_SLOW_HINT_MS=15*1000, REFRESH_DEEP_HINT_MS=30*1000;
-const APP_BUILD='v10.4.3-20260908-home-interaction';
+const APP_BUILD='v10.5.1-20260908-zero-config-notifications-fix';
 const REMOTE_PUSH_HORIZON_DAYS=35;
+const DEFAULT_PUSH_WORKER_URL='https://cysh-senior-manager-push.aw960809.workers.dev';
 let remotePushSyncTimer=null,remotePushSyncBusy=false,remotePushReady=false;
 const TRIAL_START='2026-09-01',TRIAL_END='2027-08-31';
 const TODAY=localISO(new Date());
@@ -690,7 +723,7 @@ const ACTIVITY_WORDS=/活動|競賽|比賽|徵件|營隊|研習|講座|工作坊
 const SCHOLAR_WORDS=/獎學金|獎助學金|助學金|補助|獎勵金|就學金|圓夢計畫|扶助/i;
 const EXCLUDE_WORDS=/教師|甄選錄取|班級課表|教師課表|教科書|健康檢查|疫苗|服裝儀容|收費|編班|補考|重補修|公務員|採購|會計|人事/i;
 function defaultNotificationSettings(){return {enabled:false,todayTasks:true,overdue:true,subgoalDeadline:true,activityDeadline:true,scholarshipDeadline:true,calendarDeadline:true,leadDays:[0,1,3,7],dailyTime:'18:30',quietStart:'22:30',quietEnd:'07:00'}}
-function defaultRemotePushState(){return {workerUrl:'',deviceId:'',deviceSecret:'',subscribed:false,lastSync:null,lastError:'',jobCount:0}}
+function defaultRemotePushState(){return {workerUrl:DEFAULT_PUSH_WORKER_URL,deviceId:'',deviceSecret:'',subscribed:false,lastSync:null,lastError:'',jobCount:0}}
 function defaultNotificationState(){return {sent:{},log:[],lastCheck:null,remote:defaultRemotePushState()}}
 function seedData(){return {schemaVersion:SCHEMA_VERSION,profile:{school:'國立嘉義高級中學',grade:'高三',trialStart:TRIAL_START,trialEnd:TRIAL_END},goals:[
  {id:'g1',parentId:null,level:1,title:'完成高三升學年度',desc:'完成學測、申請／分科與畢業銜接'},
@@ -1342,9 +1375,69 @@ return out}
 function pruneNotificationState(){const sent=DB.notificationState?.sent||{},cut=Date.now()-120*86400000;Object.keys(sent).forEach(k=>{if(Date.parse(sent[k])<cut)delete sent[k]})}
 async function checkNotificationReminders(force=false){DB.notificationSettings={...defaultNotificationSettings(),...(DB.notificationSettings||{})};DB.notificationState={...defaultNotificationState(),...(DB.notificationState||{}),sent:{...(DB.notificationState?.sent||{})},log:Array.isArray(DB.notificationState?.log)?DB.notificationState.log:[]};if(!DB.notificationSettings.enabled){if(force){DB.notificationState.lastCheck=new Date().toISOString();saveDB();renderNotificationCenter();toast('通知總開關目前關閉')}return 0}DB.notificationState.lastCheck=new Date().toISOString();if(!('Notification' in window)||Notification.permission!=='granted'){saveDB();renderNotificationCenter();if(force)toast('請先允許通知權限');return 0}if(!force&&inQuietHours()){saveDB();renderNotificationCenter();return 0}pruneNotificationState();let sent=0;for(const item of notificationCandidates(localISO(new Date()),force)){if(DB.notificationState.sent[item.key])continue;if(sent>=5)break;if(await showAppNotification(item.title,item.body,{tag:item.key,page:item.page})){DB.notificationState.sent[item.key]=new Date().toISOString();sent++}}saveDB();renderNotificationCenter();if(force)toast(sent?`已送出 ${sent} 則提醒`:'目前沒有新的提醒');return sent}
 
+/* CYSH ZERO-CONFIG PUSH V10.5 */
+async function enableNotificationsForDevice(){
+ if(!('Notification' in window))throw new Error('此瀏覽器不支援通知');
+ if(Notification.permission==='denied')throw new Error('通知權限已被封鎖，請先到瀏覽器或系統設定重新允許');
+ if(Notification.permission!=='granted'){
+  const p=await Notification.requestPermission();
+  if(p!=='granted')throw new Error('尚未允許通知權限')
+ }
+ DB.notificationSettings={...defaultNotificationSettings(),...(DB.notificationSettings||{}),enabled:true};
+ saveDB();
+ await subscribeRemotePush({silent:false});
+ renderNotificationCenter();
+ return true
+}
+
+async function autoConnectRemotePushIfAllowed(){
+ if(!remotePushReady||!('Notification' in window)||Notification.permission!=='granted')return false;
+ const r=ensureRemotePushIdentity();
+ if(r.subscribed)return false;
+ try{
+  await subscribeRemotePush({silent:true});
+  r.lastError='';
+  localStorage.setItem(STORE_KEY,JSON.stringify(DB));
+  renderNotificationCenter();
+  return true
+ }catch(e){
+  r.lastError=String(e?.message||e);
+  localStorage.setItem(STORE_KEY,JSON.stringify(DB));
+  renderNotificationCenter();
+  return false
+ }
+}
+
+function setupZeroConfigPushUI(){
+ const input=$('#pushWorkerUrl');
+ if(input){
+  input.value=normalizeWorkerUrl(input.value)||DEFAULT_PUSH_WORKER_URL;
+  input.readOnly=false;
+  const field=input.closest('.field');
+  if(field&&!field.closest('details.push-advanced-v105')){
+   const details=document.createElement('details');
+   details.className='push-advanced-v105';
+   const summary=document.createElement('summary');
+   summary.textContent='進階：推播後端設定';
+   field.parentElement.insertBefore(details,field);
+   details.appendChild(summary);
+   details.appendChild(field);
+  }
+ }
+ const connect=$('#connectWebPush');
+ if(connect)connect.classList.add('btn','secondary');
+}
 function base64UrlToUint8Array(value){const pad='='.repeat((4-value.length%4)%4),b64=(value+pad).replace(/-/g,'+').replace(/_/g,'/'),raw=atob(b64),out=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out}
 function randomUrlSafe(bytes=24){const arr=new Uint8Array(bytes);crypto.getRandomValues(arr);let s='';arr.forEach(x=>s+=String.fromCharCode(x));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
-function ensureRemotePushIdentity(){DB.notificationState=DB.notificationState||defaultNotificationState();DB.notificationState.remote={...defaultRemotePushState(),...(DB.notificationState.remote||{})};const r=DB.notificationState.remote;if(!r.deviceId)r.deviceId=crypto.randomUUID?crypto.randomUUID():`dev-${Date.now()}-${randomUrlSafe(8)}`;if(!r.deviceSecret)r.deviceSecret=randomUrlSafe(32);return r}
+function ensureRemotePushIdentity(){
+ DB.notificationState=DB.notificationState||defaultNotificationState();
+ DB.notificationState.remote={...defaultRemotePushState(),...(DB.notificationState.remote||{})};
+ const r=DB.notificationState.remote;
+ if(!normalizeWorkerUrl(r.workerUrl))r.workerUrl=DEFAULT_PUSH_WORKER_URL;
+ if(!r.deviceId)r.deviceId=crypto.randomUUID?crypto.randomUUID():`dev-${Date.now()}-${randomUrlSafe(8)}`;
+ if(!r.deviceSecret)r.deviceSecret=randomUrlSafe(32);
+ return r
+}
 function normalizeWorkerUrl(v){try{const u=new URL(String(v||'').trim());if(u.protocol!=='https:')return '';return u.origin}catch(_){return ''}}
 function dateTimeToISO(ds,time){const t=String(time||'18:30').match(/^(\d{2}):(\d{2})$/);if(!t)return new Date(`${ds}T18:30:00`).toISOString();return new Date(`${ds}T${t[1]}:${t[2]}:00`).toISOString()}
 function shiftFromQuiet(ds,time,st){const cur=minuteOfDay(time),a=minuteOfDay(st.quietStart),b=minuteOfDay(st.quietEnd),inside=a===b?false:(a<b?(cur>=a&&cur<b):(cur>=a||cur<b));if(!inside)return {date:ds,time};if(a<b)return {date:ds,time:st.quietEnd||'07:00'};if(cur>=a)return {date:datePlus(ds,1),time:st.quietEnd||'07:00'};return {date:ds,time:st.quietEnd||'07:00'}}
@@ -1354,8 +1447,62 @@ function buildRemotePushJobs(){const st=DB.notificationSettings||defaultNotifica
  activeOpportunities().filter(o=>!DB.opportunityState.dismissed.includes(o.id)&&!DB.opportunityState.converted.includes(o.id)&&o.deadline).forEach(o=>{for(const d of lead){const remind=datePlus(o.deadline,-d);if(o.type==='activity'&&st.activityDeadline)push({id:`opp:${o.id}:${d}`,sendAt:when(remind),title:'活動截止提醒',body:d===0?'有 1 項候選活動今天截止。':`有 1 項候選活動將在 ${d} 天後截止。`,page:'activities',tag:`opp:${o.id}:${d}`});if(o.type==='scholarship'&&st.scholarshipDeadline)push({id:`opp:${o.id}:${d}`,sendAt:when(remind),title:'獎助截止提醒',body:d===0?'有 1 項候選獎助今天截止。':`有 1 項候選獎助將在 ${d} 天後截止。`,page:'scholarships',tag:`opp:${o.id}:${d}`})}});
  if(st.calendarDeadline){const rows=[];Object.entries(FIXED_EVENTS).forEach(([date,items])=>items.filter(x=>x.kind==='deadline').forEach((x,n)=>rows.push({id:`fixed:${date}:${n}`,date})));DB.events.filter(e=>e.kind==='deadline').forEach(e=>rows.push({id:e.id,date:e.date}));rows.forEach(e=>{for(const d of lead){const remind=datePlus(e.date,-d);push({id:`event:${e.id}:${d}`,sendAt:when(remind),title:'行事曆期限提醒',body:d===0?'行事曆有 1 項期限今天到期。':`行事曆有 1 項期限將在 ${d} 天後到期。`,page:'calendar',tag:`event:${e.id}:${d}`})}})}
  return jobs.sort((a,b)=>a.sendAt.localeCompare(b.sendAt)).slice(0,150)}
-async function remotePushRequest(action,body={}){const r=ensureRemotePushIdentity(),base=normalizeWorkerUrl(r.workerUrl);if(!base)throw new Error('請先填入有效的 Cloudflare Worker HTTPS 網址');const res=await fetch(`${base}/device/${encodeURIComponent(r.deviceId)}/${action}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({secret:r.deviceSecret,...body})});let data={};try{data=await res.json()}catch(_){data={}}if(!res.ok)throw new Error(data.error||`HTTP ${res.status}`);return data}
-async function subscribeRemotePush(){if(!('serviceWorker' in navigator)||!('PushManager' in window))throw new Error('此瀏覽器不支援 Web Push');if(Notification.permission!=='granted'){const p=await Notification.requestPermission();if(p!=='granted')throw new Error('必須先允許通知權限')}const r=ensureRemotePushIdentity(),base=normalizeWorkerUrl($('#pushWorkerUrl')?.value||r.workerUrl);if(!base)throw new Error('請填入有效的 Cloudflare Worker HTTPS 網址');r.workerUrl=base;const configRes=await fetch(base+'/config',{cache:'no-store'});if(!configRes.ok)throw new Error('無法取得推播後端設定');const cfg=await configRes.json();if(!cfg.publicKey)throw new Error('推播後端尚未設定 VAPID 公鑰');const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:base64UrlToUint8Array(cfg.publicKey)});const res=await fetch(`${base}/device/${encodeURIComponent(r.deviceId)}/subscribe`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({secret:r.deviceSecret,subscription:sub.toJSON(),timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||'Asia/Taipei'})});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.error||`HTTP ${res.status}`);r.subscribed=true;r.lastError='';saveDB();await syncRemotePushSchedule(true);return data}
+async function remotePushRequest(action,body={}){
+ const r=ensureRemotePushIdentity(),base=normalizeWorkerUrl(r.workerUrl||DEFAULT_PUSH_WORKER_URL);
+ if(!base)throw new Error('推播後端設定無效');
+ r.workerUrl=base;
+ const res=await fetch(`${base}/device/${encodeURIComponent(r.deviceId)}/${action}`,{
+  method:'POST',
+  headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({secret:r.deviceSecret,...body})
+ });
+ let data={};
+ try{data=await res.json()}catch(_){data={}}
+ if(!res.ok)throw new Error(data.error||`HTTP ${res.status}`);
+ return data
+}
+async function subscribeRemotePush({silent=false}={}){
+ if(!('serviceWorker' in navigator)||!('PushManager' in window))throw new Error('此瀏覽器不支援 Web Push');
+ if(Notification.permission!=='granted'){
+  const p=await Notification.requestPermission();
+  if(p!=='granted')throw new Error('必須先允許通知權限')
+ }
+ const r=ensureRemotePushIdentity();
+ const base=normalizeWorkerUrl($('#pushWorkerUrl')?.value||r.workerUrl||DEFAULT_PUSH_WORKER_URL);
+ if(!base)throw new Error('推播後端設定無效');
+ r.workerUrl=base;
+
+ const configRes=await fetch(base+'/config',{cache:'no-store'});
+ if(!configRes.ok)throw new Error('無法取得推播後端設定');
+ const cfg=await configRes.json();
+ if(!cfg.publicKey)throw new Error('推播後端尚未設定 VAPID 公鑰');
+
+ const reg=await navigator.serviceWorker.ready;
+ let sub=await reg.pushManager.getSubscription();
+ if(!sub)sub=await reg.pushManager.subscribe({
+  userVisibleOnly:true,
+  applicationServerKey:base64UrlToUint8Array(cfg.publicKey)
+ });
+
+ const res=await fetch(`${base}/device/${encodeURIComponent(r.deviceId)}/subscribe`,{
+  method:'POST',
+  headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({
+   secret:r.deviceSecret,
+   subscription:sub.toJSON(),
+   timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||'Asia/Taipei'
+  })
+ });
+ const data=await res.json().catch(()=>({}));
+ if(!res.ok)throw new Error(data.error||`HTTP ${res.status}`);
+
+ DB.notificationSettings={...defaultNotificationSettings(),...(DB.notificationSettings||{}),enabled:true};
+ r.subscribed=true;
+ r.lastError='';
+ saveDB();
+ await syncRemotePushSchedule(!silent);
+ return data
+}
 async function syncRemotePushSchedule(force=false){if(remotePushSyncBusy)return false;const r=DB.notificationState?.remote;if(!r?.subscribed||!normalizeWorkerUrl(r.workerUrl))return false;remotePushSyncBusy=true;try{const jobs=buildRemotePushJobs(),data=await remotePushRequest('sync',{jobs,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||'Asia/Taipei'});r.lastSync=new Date().toISOString();r.lastError='';r.jobCount=Number(data.jobCount??jobs.length);localStorage.setItem(STORE_KEY,JSON.stringify(DB));renderNotificationCenter();if(force)toast(`背景推播已同步 ${r.jobCount} 則未來提醒`);return true}catch(e){r.lastError=String(e?.message||e);localStorage.setItem(STORE_KEY,JSON.stringify(DB));renderNotificationCenter();if(force)toast('背景推播同步失敗：'+r.lastError);return false}finally{remotePushSyncBusy=false}}
 function queueRemotePushScheduleSync(){if(remotePushSyncBusy)return;const r=DB.notificationState?.remote;if(!r?.subscribed||!normalizeWorkerUrl(r.workerUrl))return;clearTimeout(remotePushSyncTimer);remotePushSyncTimer=setTimeout(()=>syncRemotePushSchedule(false),1800)}
 async function testRemotePush(){try{await remotePushRequest('test');toast('背景測試推播已送出，請查看 Android 通知')}catch(e){toast('背景測試失敗：'+String(e?.message||e))}}
@@ -1364,8 +1511,96 @@ async function disconnectRemotePush(){const r=DB.notificationState?.remote;if(!r
 async function renderStorageState(){const el=$('#storagePersistState');if(!el)return;if(!navigator.storage){el.textContent='瀏覽器未提供 Storage API';return}try{const persisted=await navigator.storage.persisted?.();DB.dataProtection.persistenceGranted=!!persisted;if(persisted){el.textContent='已取得持久儲存'}else{const est=await navigator.storage.estimate?.();const used=est?.usage?Math.round(est.usage/1024)+' KB':'容量未知';el.textContent=`一般網站儲存｜已用 ${used}`}saveDB()}catch(e){el.textContent='狀態無法讀取'}}
 function renderPWAInstallState(){const el=$('#pwaInstallState'),btn=$('#installPwa');if(!el||!btn)return;if(isStandaloneApp()){el.textContent='已安裝／獨立視窗';btn.textContent='已安裝';btn.disabled=true}else if(deferredInstallPrompt){el.textContent='可直接安裝';btn.textContent='安裝應用程式';btn.disabled=false}else{el.textContent=['http:','https:'].includes(location.protocol)?'可由瀏覽器選單安裝':'本機預覽不可安裝';btn.textContent='等待瀏覽器安裝';btn.disabled=true}}
 function renderDataProtectionState(){const raw=localStorage.getItem(SAFETY_BACKUP_KEY),el=$('#safetyBackupState'),btn=$('#downloadSafetyBackup');if(el)el.textContent=raw?'已有自動保全快照':'尚未產生';if(btn)btn.disabled=!raw}
-function renderNotificationCenter(){const st=DB.notificationSettings||defaultNotificationSettings(),ns=DB.notificationState||defaultNotificationState(),perm=('Notification' in window)?Notification.permission:'unsupported';const map={notifyMaster:'enabled',notifyTodayTasks:'todayTasks',notifyOverdue:'overdue',notifySubgoal:'subgoalDeadline',notifyActivity:'activityDeadline',notifyScholarship:'scholarshipDeadline',notifyCalendar:'calendarDeadline'};Object.entries(map).forEach(([id,key])=>{const el=$('#'+id);if(el)el.checked=!!st[key]});if($('#notifyDailyTime'))$('#notifyDailyTime').value=st.dailyTime||'18:30';if($('#notifyQuietStart'))$('#notifyQuietStart').value=st.quietStart||'22:30';if($('#notifyQuietEnd'))$('#notifyQuietEnd').value=st.quietEnd||'07:00';$$('[data-notify-lead]').forEach(x=>x.checked=(st.leadDays||[]).includes(Number(x.dataset.notifyLead)));if($('#notifyPermissionState'))$('#notifyPermissionState').textContent=notificationPermissionText();if($('#notifyLastCheck'))$('#notifyLastCheck').textContent=ns.lastCheck?new Date(ns.lastCheck).toLocaleString('zh-TW'):'尚未檢查';if($('#requestNotifyPermission')){$('#requestNotifyPermission').disabled=perm==='unsupported'||perm==='granted';$('#requestNotifyPermission').textContent=perm==='granted'?'通知已允許':perm==='unsupported'?'不支援通知':'允許通知'}if($('#testNotification'))$('#testNotification').disabled=perm!=='granted';if($('#notificationLog'))$('#notificationLog').innerHTML=ns.log?.length?ns.log.slice(0,6).map(x=>`<div class="history-item"><div><b>${esc(x.title)}</b><span>${new Date(x.at).toLocaleString('zh-TW')}｜${esc(x.body)}</span></div></div>`).join(''):'<div class="empty">尚無通知紀錄。</div>';const rp={...defaultRemotePushState(),...(ns.remote||{})};if($('#pushWorkerUrl')&&document.activeElement!==$('#pushWorkerUrl'))$('#pushWorkerUrl').value=rp.workerUrl||'';if($('#remotePushState'))$('#remotePushState').textContent=rp.subscribed?'已連接':rp.workerUrl?'待連接':'尚未連接';if($('#remotePushLastSync'))$('#remotePushLastSync').textContent=rp.lastSync?new Date(rp.lastSync).toLocaleString('zh-TW'):'尚未同步';if($('#remotePushHint'))$('#remotePushHint').textContent=rp.lastError?`最近錯誤：${rp.lastError}`:(rp.subscribed?`後端已保存 ${rp.jobCount||0} 則未來提醒；完整目標資料仍只在本機。`:'部署 Cloudflare Worker 後貼上網址，再按「連接背景推播」。');if($('#syncWebPush'))$('#syncWebPush').disabled=!rp.subscribed;if($('#testWebPush'))$('#testWebPush').disabled=!rp.subscribed;if($('#disconnectWebPush'))$('#disconnectWebPush').disabled=!rp.subscribed&&!rp.workerUrl}
-async function initPWA(){if('serviceWorker' in navigator&&['http:','https:'].includes(location.protocol)){try{const reg=await navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'});reg.update().catch(()=>{});navigator.serviceWorker.addEventListener('message',e=>{if(e.data?.type==='NAVIGATE'&&e.data.page)go(e.data.page)});renderPWAInstallState()}catch(e){console.warn('SW register failed',e)}}renderPWAInstallState();renderStorageState();renderDataProtectionState();renderNotificationCenter();remotePushReady=true;setTimeout(()=>syncRemotePushSchedule(false),2400)}
+function renderNotificationCenter(){
+ const st=DB.notificationSettings||defaultNotificationSettings();
+ const ns=DB.notificationState||defaultNotificationState();
+ const perm=('Notification' in window)?Notification.permission:'unsupported';
+ const map={
+  notifyMaster:'enabled',notifyTodayTasks:'todayTasks',notifyOverdue:'overdue',
+  notifySubgoal:'subgoalDeadline',notifyActivity:'activityDeadline',
+  notifyScholarship:'scholarshipDeadline',notifyCalendar:'calendarDeadline'
+ };
+ Object.entries(map).forEach(([id,key])=>{
+  const el=$('#'+id);if(el)el.checked=!!st[key]
+ });
+ if($('#notifyDailyTime'))$('#notifyDailyTime').value=st.dailyTime||'18:30';
+ if($('#notifyQuietStart'))$('#notifyQuietStart').value=st.quietStart||'22:30';
+ if($('#notifyQuietEnd'))$('#notifyQuietEnd').value=st.quietEnd||'07:00';
+ $$('[data-notify-lead]').forEach(x=>x.checked=(st.leadDays||[]).includes(Number(x.dataset.notifyLead)));
+
+ if($('#notifyPermissionState'))$('#notifyPermissionState').textContent=notificationPermissionText();
+ if($('#notifyLastCheck'))$('#notifyLastCheck').textContent=ns.lastCheck?new Date(ns.lastCheck).toLocaleString('zh-TW'):'尚未檢查';
+
+ if($('#notificationLog'))$('#notificationLog').innerHTML=ns.log?.length
+  ?ns.log.slice(0,6).map(x=>`<div class="history-item"><div><b>${esc(x.title)}</b><span>${new Date(x.at).toLocaleString('zh-TW')}｜${esc(x.body)}</span></div></div>`).join('')
+  :'<div class="empty">尚無通知紀錄。</div>';
+
+ const rp={...defaultRemotePushState(),...(ns.remote||{})};
+ if(!normalizeWorkerUrl(rp.workerUrl))rp.workerUrl=DEFAULT_PUSH_WORKER_URL;
+
+ if($('#pushWorkerUrl')&&document.activeElement!==$('#pushWorkerUrl'))$('#pushWorkerUrl').value=rp.workerUrl;
+ if($('#remotePushState'))$('#remotePushState').textContent=rp.subscribed?'已連接':perm==='granted'?'待完成連接':'尚未啟用';
+ if($('#remotePushLastSync'))$('#remotePushLastSync').textContent=rp.lastSync?new Date(rp.lastSync).toLocaleString('zh-TW'):'尚未同步';
+
+ const ios=/iphone|ipad|ipod/i.test(navigator.userAgent||'');
+ let hint='';
+ if(rp.lastError)hint=`最近錯誤：${rp.lastError}`;
+ else if(rp.subscribed)hint=`這台裝置已建立獨立推播訂閱，後端目前保存 ${rp.jobCount||0} 則未來提醒；完整目標資料仍只在本機。`;
+ else if(ios&&!isStandaloneApp())hint='iPhone／iPad：請先「加入主畫面」，再從主畫面開啟 App 並啟用通知。';
+ else if(perm==='denied')hint='通知權限已被封鎖；請到瀏覽器／系統網站設定重新允許後再回來。';
+ else hint='按「啟用通知與背景推播」即可完成；後端網址已內建，不需要手動設定。';
+ if($('#remotePushHint'))$('#remotePushHint').textContent=hint;
+
+ const enableBtn=$('#requestNotifyPermission');
+ if(enableBtn){
+  enableBtn.disabled=perm==='unsupported'||(perm==='granted'&&rp.subscribed);
+  enableBtn.textContent=perm==='unsupported'
+   ?'此裝置不支援通知'
+   :(perm==='granted'&&rp.subscribed)
+    ?'通知與背景推播已啟用'
+    :'啟用通知與背景推播';
+ }
+
+ if($('#testNotification'))$('#testNotification').disabled=perm!=='granted';
+ if($('#syncWebPush'))$('#syncWebPush').disabled=!rp.subscribed;
+ if($('#testWebPush'))$('#testWebPush').disabled=!rp.subscribed;
+ if($('#disconnectWebPush'))$('#disconnectWebPush').disabled=!rp.subscribed;
+
+ const reconnect=$('#connectWebPush');
+ if(reconnect){
+  reconnect.disabled=perm==='unsupported';
+  reconnect.textContent=rp.subscribed?'重新連接背景推播':'連接背景推播';
+  reconnect.classList.add('secondary');
+ }
+}
+async function initPWA(){
+ if('serviceWorker' in navigator&&['http:','https:'].includes(location.protocol)){
+  try{
+   const reg=await navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'});
+   reg.update().catch(()=>{});
+   navigator.serviceWorker.addEventListener('message',e=>{
+    if(e.data?.type==='NAVIGATE'&&e.data.page)go(e.data.page)
+   });
+   renderPWAInstallState()
+  }catch(e){console.warn('SW register failed',e)}
+ }
+ renderPWAInstallState();
+ renderStorageState();
+ renderDataProtectionState();
+
+ const r=ensureRemotePushIdentity();
+ if(!normalizeWorkerUrl(r.workerUrl))r.workerUrl=DEFAULT_PUSH_WORKER_URL;
+ saveDB();
+ setupZeroConfigPushUI();
+ renderNotificationCenter();
+
+ remotePushReady=true;
+
+ // 已有通知權限的裝置可在重新開啟 App 時自動完成 Web Push 訂閱；
+ // 新裝置仍需本人點一次按鈕授權瀏覽器通知。
+ setTimeout(()=>autoConnectRemotePushIfAllowed(),1200);
+ setTimeout(()=>syncRemotePushSchedule(false),2400)
+}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;renderPWAInstallState()});window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;renderPWAInstallState();toast('應用程式已安裝')});
 
 /* CYSH YOUTH V7 UI HOTFIX */
@@ -1412,10 +1647,10 @@ $('#resetAll').onclick=()=>{if(!confirm('重設會清空目前試行進度。系
 $('#downloadSafetyBackup').onclick=()=>{const raw=localStorage.getItem(SAFETY_BACKUP_KEY);if(!raw)return toast('目前沒有保全快照');const blob=new Blob([raw],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`嘉中高三_自動保全快照_${localISO(new Date())}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),500)};
 $('#persistStorage').onclick=async()=>{if(!navigator.storage?.persist)return toast('此瀏覽器未提供持久儲存 API');try{const ok=await navigator.storage.persist();DB.dataProtection.persistenceGranted=ok;saveDB();await renderStorageState();toast(ok?'已取得持久儲存保護':'瀏覽器目前未核准；資料仍照常保存在網站空間')}catch(e){toast('無法要求持久儲存')}};
 $('#installPwa').onclick=async()=>{if(!deferredInstallPrompt)return toast('請使用 Chrome 選單的「安裝應用程式」');deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;renderPWAInstallState()};
-$('#requestNotifyPermission').onclick=async()=>{if(!('Notification' in window))return toast('此瀏覽器不支援通知');const p=await Notification.requestPermission();if(p==='granted'){DB.notificationSettings.enabled=true;saveDB();renderNotificationCenter();toast('通知權限已開啟');checkNotificationReminders(true)}else{renderNotificationCenter();toast(p==='denied'?'通知權限已被封鎖':'尚未允許通知')}};
+$('#requestNotifyPermission').onclick=async()=>{try{$('#requestNotifyPermission').disabled=true;await enableNotificationsForDevice();toast('通知與背景推播已啟用')}catch(e){const r=ensureRemotePushIdentity();r.lastError=String(e?.message||e);localStorage.setItem(STORE_KEY,JSON.stringify(DB));renderNotificationCenter();toast('啟用失敗：'+r.lastError)}finally{renderNotificationCenter()}};
 $('#testNotification').onclick=()=>showAppNotification('嘉中高三管理｜測試通知','通知功能已成功連接。',{tag:'test-'+Date.now(),page:'system'}).then(ok=>toast(ok?'測試通知已送出':'通知送出失敗'));
-$('#pushWorkerUrl').onchange=e=>{const r=ensureRemotePushIdentity();r.workerUrl=normalizeWorkerUrl(e.target.value);r.subscribed=false;r.lastError='';saveDB();renderNotificationCenter()};
-$('#connectWebPush').onclick=async()=>{try{$('#connectWebPush').disabled=true;await subscribeRemotePush();toast('背景推播已連接')}catch(e){const r=ensureRemotePushIdentity();r.lastError=String(e?.message||e);localStorage.setItem(STORE_KEY,JSON.stringify(DB));renderNotificationCenter();toast('連接失敗：'+r.lastError)}finally{$('#connectWebPush').disabled=false}};
+$('#pushWorkerUrl').onchange=e=>{const r=ensureRemotePushIdentity();r.workerUrl=normalizeWorkerUrl(e.target.value)||DEFAULT_PUSH_WORKER_URL;r.subscribed=false;r.lastError='';saveDB();renderNotificationCenter()};
+$('#connectWebPush').onclick=async()=>{try{$('#connectWebPush').disabled=true;await subscribeRemotePush({silent:false});toast('背景推播已連接')}catch(e){const r=ensureRemotePushIdentity();r.lastError=String(e?.message||e);localStorage.setItem(STORE_KEY,JSON.stringify(DB));renderNotificationCenter();toast('連接失敗：'+r.lastError)}finally{renderNotificationCenter()}};
 $('#syncWebPush').onclick=()=>syncRemotePushSchedule(true);$('#testWebPush').onclick=()=>testRemotePush();$('#disconnectWebPush').onclick=()=>disconnectRemotePush();
 $('#checkNotificationsNow').onclick=()=>checkNotificationReminders(true);
 const notifyMap={notifyMaster:'enabled',notifyTodayTasks:'todayTasks',notifyOverdue:'overdue',notifySubgoal:'subgoalDeadline',notifyActivity:'activityDeadline',notifyScholarship:'scholarshipDeadline',notifyCalendar:'calendarDeadline'};Object.entries(notifyMap).forEach(([id,key])=>{$('#'+id).onchange=e=>{DB.notificationSettings[key]=e.target.checked;saveDB();renderNotificationCenter()}});
