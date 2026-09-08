@@ -330,6 +330,105 @@ button,input,select,textarea{font:inherit}.app{max-width:1240px;margin:auto;padd
   }
 }
 
+
+/* CYSH HOME STATS + INTERACTION V10.4 */
+/* Android / Chrome 點擊回饋改為系統綠色，不再出現藍色 tap highlight */
+html,body,button,.btn,a,label,input,select,textarea,[role="button"],nav *, .nav *, .bottom-nav *{
+  -webkit-tap-highlight-color:transparent!important;
+}
+button,.btn,a,[role="button"],.bottom-nav button,.bottom-nav a,nav button,nav a{
+  transition:transform .10s ease,box-shadow .12s ease,background-color .12s ease,border-color .12s ease,opacity .12s ease,filter .12s ease!important;
+}
+button:active,.btn:active,a:active,[role="button"]:active,.bottom-nav button:active,.bottom-nav a:active,nav button:active,nav a:active{
+  transform:scale(.975);filter:brightness(.965);
+}
+button:focus,.btn:focus,a:focus,input:focus,select:focus,textarea:focus{outline:none!important}
+button:focus-visible,.btn:focus-visible,a:focus-visible,[role="button"]:focus-visible{
+  outline:3px solid rgba(47,106,87,.22)!important;outline-offset:2px!important;
+}
+input:focus-visible,select:focus-visible,textarea:focus-visible{
+  border-color:var(--green,#315f50)!important;box-shadow:0 0 0 3px rgba(47,106,87,.14)!important;
+}
+input[type="checkbox"],input[type="radio"]{accent-color:var(--green,#315f50)!important}
+.bottom-nav button:active,.bottom-nav a:active,nav button:active,nav a:active{
+  background:rgba(47,106,87,.08)!important;border-radius:14px;
+}
+
+/* 通知時段卡片滿版 + 時間欄完整 */
+#notifyQuietGroupV103{
+  width:100%!important;max-width:none!important;min-width:0!important;
+  grid-column:1/-1!important;justify-self:stretch!important;
+}
+#notifyQuietGroupV103 .notify-group-body-v103{width:100%!important;min-width:0!important}
+#notifyQuietGroupV103 .notify-quiet-times-v1031,
+#notifyQuietGroupV103 .notify-quiet-times-v103{
+  width:100%!important;min-width:0!important;display:grid!important;
+  grid-template-columns:minmax(0,1fr) 28px minmax(0,1fr)!important;
+  align-items:center!important;gap:8px!important;
+}
+#notifyQuietGroupV103 select,#notifyQuietGroupV103 input[type="time"]{
+  width:100%!important;min-width:0!important;max-width:none!important;box-sizing:border-box!important;font-size:16px!important;
+}
+
+/* 首頁主要操作 */
+.home-action-grid-v104{
+  display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:10px!important;width:100%!important;align-items:stretch!important;
+}
+.home-action-v104{
+  min-height:54px!important;width:100%!important;margin:0!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  text-align:center!important;line-height:1.25!important;border-radius:16px!important;
+  font-weight:800!important;box-sizing:border-box!important;
+}
+.home-action-wide-v104{grid-column:1/-1!important}
+.home-action-primary-v104{box-shadow:0 7px 18px rgba(47,106,87,.12)!important}
+.home-action-secondary-v104{background:rgba(235,243,239,.9)!important}
+.home-action-tertiary-v104{
+  background:rgba(248,241,224,.86)!important;border-color:rgba(183,148,74,.30)!important;color:#6f5b33!important;
+}
+
+/* 學測節奏 */
+.home-rhythm-card-v104{
+  padding:22px 20px!important;border-radius:24px!important;
+  box-shadow:0 8px 22px rgba(38,64,53,.06)!important;
+}
+.home-rhythm-card-v104 .meter{height:10px!important}
+
+/* 統計卡 */
+.home-stats-grid-v104{
+  display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:12px!important;align-items:stretch!important;
+}
+.home-stat-card-v104{
+  min-width:0!important;min-height:142px!important;padding:18px 16px!important;
+  border-radius:22px!important;box-sizing:border-box!important;
+}
+.home-stat-wide-v104{grid-column:1/-1!important;min-height:124px!important}
+
+/* 沒有分母時用 dash，而不是假 100% */
+.stat .value.rate-empty-v104{font-size:24px!important;color:var(--muted,#6e7c76)!important}
+.stat .trend.rate-empty-v104{color:var(--muted,#6e7c76)!important}
+
+/* 今日區避免底部導覽遮擋 */
+.home-today-section-v104{padding-bottom:calc(118px + env(safe-area-inset-bottom))!important}
+
+@media(max-width:620px){
+  #notifyQuietGroupV103 .notify-quiet-times-v1031,
+  #notifyQuietGroupV103 .notify-quiet-times-v103{
+    grid-template-columns:minmax(0,1fr) 24px minmax(0,1fr)!important;gap:6px!important;
+  }
+  .home-action-v104{min-height:52px!important;padding:11px 10px!important;font-size:14px!important}
+  .home-rhythm-card-v104{padding:20px 18px!important}
+  .home-stats-grid-v104{gap:10px!important}
+  .home-stat-card-v104{min-height:132px!important;padding:16px 14px!important}
+  .home-stat-wide-v104{min-height:112px!important}
+}
+@media(max-width:390px){
+  .home-action-grid-v104{grid-template-columns:1fr!important}
+  .home-action-wide-v104{grid-column:auto!important}
+}
+
 </style>
 </head>
 <body>
@@ -344,7 +443,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1240px;margin:auto;padd
   <div class="card hero-main"><div class="eyebrow">Year Trial · Senior Student</div><h2>現在只看「今天該做什麼」</h2><p>目標、排程、完成紀錄、行事曆與分析使用同一份資料。任何進度都由第四層實際執行紀錄回推，不再手動填百分比。</p><div class="actions"><button class="btn" data-go="goals">管理目標與計畫</button><button class="btn secondary" data-go="calendar">查看行事曆</button><button class="btn gold" id="quickAddTask">新增具體任務</button></div></div>
   <div class="card phase-card"><span class="phase-pill" id="phaseName">讀取中</span><h3 id="phaseFocus">—</h3><div class="meter"><span id="yearMeter" style="width:0"></span></div><div class="mini" id="yearProgressText"></div><p class="mini" id="phaseDesc"></p></div>
  </div>
- <div class="stats"><div class="stat"><span class="label">今日執行率</span><span class="value" id="todayRate">0%</span><div class="trend" id="todayTrend"></div></div><div class="stat"><span class="label">本週執行率</span><span class="value" id="weekRate">0%</span><div class="trend" id="weekTrend"></div></div><div class="stat"><span class="label">進行中子任務</span><span class="value" id="activeSubgoals">0</span><div class="trend">由任務期間判斷</div></div><div class="stat"><span class="label">7 日壓力量</span><span class="value" id="pressure7">0</span><div class="trend" id="pressureTrend"></div></div><div class="stat"><span class="label">高適配機會</span><span class="value" id="homeHigh">0</span><div class="trend">活動＋獎助候選</div></div></div>
+ <div class="stats"><div class="stat"><span class="label">今日執行率</span><span class="value rate-empty-v104" id="todayRate">—</span><div class="trend" id="todayTrend"></div></div><div class="stat"><span class="label">本週執行率</span><span class="value rate-empty-v104" id="weekRate">—</span><div class="trend" id="weekTrend"></div></div><div class="stat"><span class="label">進行中子任務</span><span class="value" id="activeSubgoals">0</span><div class="trend">由任務期間判斷</div></div><div class="stat"><span class="label">7 日壓力量</span><span class="value" id="pressure7">0</span><div class="trend" id="pressureTrend"></div></div><div class="stat"><span class="label">高適配機會</span><span class="value" id="homeHigh">0</span><div class="trend">活動＋獎助候選</div></div></div>
  <div class="section-head"><div><h3>今日計畫執行</h3><p>由第四層具體實現方式自動生成</p></div><span class="mini" id="todayDateLabel"></span></div>
  <div class="today-grid"><div class="card today-list"><div id="todoList"></div></div><div class="card analysis-card"><h3 style="margin:0 0 10px;font-size:15px">即時分析</h3><div class="analysis-list" id="analysisList"></div></div></div>
  <div class="section-head"><div><h3>近期重要節點</h3><p>任務期限、個人行程與機會截止合併顯示</p></div></div><div class="card panel-pad"><div id="upcomingList"></div></div>
@@ -399,7 +498,7 @@ const CYSH_PARSER_VERSION=8;
 const SOURCE_COOLDOWN_MS=10*60*1000, RATE_LIMIT_COOLDOWN_MS=20*60*1000;
 const REFRESH_TOTAL_TIMEOUT_MS=45*1000, SOURCE_TIMEOUT_MS={cysh:18*1000,youth:12*1000,moe:10*1000};
 const REFRESH_SLOW_HINT_MS=15*1000, REFRESH_DEEP_HINT_MS=30*1000;
-const APP_BUILD='v10.3.1-20260908-notification-ui-hotfix';
+const APP_BUILD='v10.4.0-20260908-home-stats-interaction';
 const REMOTE_PUSH_HORIZON_DAYS=35;
 let remotePushSyncTimer=null,remotePushSyncBusy=false,remotePushReady=false;
 const TRIAL_START='2026-09-01',TRIAL_END='2027-08-31';
@@ -861,17 +960,96 @@ function goalTasks(id){const gids=[id,...descendants(id).map(x=>x.id)];return DB
 function goalProgress(id){const ts=goalTasks(id);if(!ts.length)return 0;return Math.round(ts.reduce((a,t)=>a+taskRate(t),0)/ts.length)}
 function tasksForDate(ds){return DB.tasks.filter(t=>taskDueOn(t,ds))}
 function currentWeekBounds(){const d=parseDate(TODAY),n=(d.getDay()+6)%7,s=new Date(d);s.setDate(d.getDate()-n);return[localISO(s),TODAY]}
-function calcRate(start,end){let due=0,done=0;DB.tasks.forEach(t=>occurrences(t,start,end).forEach(ds=>{due++;if(isDone(t.id,ds))done++}));return{due,done,rate:due?Math.round(done/due*100):100}}
+function calcRate(start,end){
+ let due=0,done=0;
+ DB.tasks.forEach(t=>occurrences(t,start,end).forEach(ds=>{
+  due++;
+  if(isDone(t.id,ds))done++;
+ }));
+ return {due,done,rate:due?Math.round(done/due*100):null}
+}
 function activeSubgoals(){return DB.goals.filter(g=>g.level===3&&g.startDate&&g.endDate&&between(TODAY,g.startDate,g.endDate)).length}
 function datePlus(ds,n){const d=parseDate(ds);d.setDate(d.getDate()+n);return localISO(d)}
-function futurePressure(days=7){const end=datePlus(TODAY,days-1);let tasks=0;DB.tasks.forEach(t=>tasks+=occurrences(t,TODAY,end).length);const deadlines=activeOpportunities().filter(o=>daysUntil(o.deadline)>=0&&daysUntil(o.deadline)<days&&!DB.opportunityState.dismissed.includes(o.id)).length;const events=DB.events.filter(e=>e.date>=TODAY&&e.date<=end).length;return tasks+deadlines+events}
+function futurePressureDetails(days=7){
+ const end=datePlus(TODAY,days-1);
+ let tasks=0;
+ DB.tasks.forEach(t=>occurrences(t,TODAY,end).forEach(ds=>{
+  if(!isDone(t.id,ds))tasks++;
+ }));
+ const deadlines=activeOpportunities().filter(o=>{
+  const n=daysUntil(o.deadline);
+  return n>=0&&n<days
+   &&!DB.opportunityState.dismissed.includes(o.id)
+   &&!DB.opportunityState.converted.includes(o.id);
+ }).length;
+ const personalEvents=DB.events.filter(e=>e.date>=TODAY&&e.date<=end).length;
+ let fixedEvents=0;
+ Object.entries(FIXED_EVENTS).forEach(([date,items])=>{
+  if(date>=TODAY&&date<=end)fixedEvents+=items.length;
+ });
+ const events=personalEvents+fixedEvents;
+ return {tasks,deadlines,events,total:tasks+deadlines+events}
+}
+function futurePressure(days=7){return futurePressureDetails(days).total}
 function highOpportunityCount(){return activeOpportunities().filter(o=>scoreOf(o)>=80&&daysUntil(o.deadline)>=0&&!DB.opportunityState.dismissed.includes(o.id)&&!DB.opportunityState.converted.includes(o.id)).length}
 function go(page){$$('.page').forEach(p=>p.classList.toggle('active',p.dataset.page===page));$$('[data-nav]').forEach(b=>b.classList.toggle('active',b.dataset.nav===page));window.scrollTo({top:0,behavior:'smooth'});if(page==='calendar')renderCalendar();if(page==='system')renderSystem();if(page==='activities'||page==='scholarships')maybeAutoRefresh()}
 $$('[data-nav]').forEach(b=>b.onclick=()=>go(b.dataset.nav));$$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
 function renderPhase(){const p=currentPhase();$('#phaseName').textContent=p.name;$('#phaseFocus').textContent=p.focus;$('#phaseDesc').textContent=p.desc;const total=daysBetween(TRIAL_START,TRIAL_END)+1,elapsed=Math.max(0,Math.min(total,daysBetween(TRIAL_START,TODAY)+1)),pct=Math.round(elapsed/total*100);$('#yearMeter').style.width=pct+'%';$('#yearProgressText').textContent=`一年試行第 ${elapsed} / ${total} 天｜時間進度 ${pct}%`;$('#todayDateLabel').textContent=`${TODAY}｜${p.name}`}
-function renderToday(){const list=tasksForDate(TODAY),done=list.filter(t=>isDone(t.id,TODAY)).length;$('#todoList').innerHTML=list.length?list.map(t=>`<div class="todo"><div class="check ${isDone(t.id,TODAY)?'done':''}" data-check="${t.id}">${isDone(t.id,TODAY)?'✓':''}</div><div class="todo-main"><b>${esc(t.title)}</b><span>${esc(taskPath(t).join(' → '))}｜${t.duration||0} 分鐘</span></div><span class="priority ${t.priority==='high'?'high':''}">${t.priority==='high'?'高':t.priority==='low'?'低':'一般'}</span></div>`).join(''):'<div class="empty">今天沒有排定的具體實現方式。</div>';$$('[data-check]').forEach(x=>x.onclick=()=>toggleDone(x.dataset.check,TODAY));const rate=list.length?Math.round(done/list.length*100):100;$('#todayRate').textContent=rate+'%';$('#todayTrend').textContent=`${done} / ${list.length} 已完成`;$('#todayTrend').className='trend'+(rate<50&&list.length?' warn':'')}
-function renderStats(){const [s,e]=currentWeekBounds(),w=calcRate(s,e);$('#weekRate').textContent=w.rate+'%';$('#weekTrend').textContent=`本週 ${w.done} / ${w.due} 次已完成`;$('#activeSubgoals').textContent=activeSubgoals();$('#pressure7').textContent=futurePressure(7);$('#pressureTrend').textContent='未來 7 日任務＋期限＋事件';$('#homeHigh').textContent=highOpportunityCount()}
-function renderAnalysis(){const [s,e]=currentWeekBounds(),w=calcRate(s,e),today=tasksForDate(TODAY),td=today.filter(t=>isDone(t.id,TODAY)).length,tr=today.length?Math.round(td/today.length*100):100;let items=[];if(today.length&&tr<50)items.push({risk:true,title:'今日執行偏低',text:`目前完成 ${td}/${today.length}，先處理高優先任務，避免未完成量帶到明天。`});else items.push({good:true,title:'今日節奏正常',text:`目前完成 ${td}/${today.length}，今日執行率 ${tr}%。`});if(w.due>=4&&w.rate<65)items.push({risk:true,title:'本週執行率需要修正',text:`本週完成 ${w.done}/${w.due} 次（${w.rate}%），建議縮減非核心活動並保留補做時段。`});const high=DB.tasks.filter(t=>{const b=taskBounds(t);return t.priority==='high'&&between(TODAY,b.start,b.end)&&taskRate(t)<50});if(high.length)items.push({risk:true,title:'高優先任務落後',text:`${high.slice(0,2).map(t=>t.subject+' '+taskRate(t)+'%').join('、')}。進度是由實際完成紀錄回推。`});const near=activeOpportunities().filter(o=>{const n=daysUntil(o.deadline);return n>=0&&n<=7&&!DB.opportunityState.dismissed.includes(o.id)&&!DB.opportunityState.converted.includes(o.id)});if(near.length)items.push({title:'近期機會期限',text:`未來 7 日有 ${near.length} 個候選機會截止；只有本人確認後才會轉入正式計畫。`});$('#analysisList').innerHTML=items.map(i=>`<div class="analysis-item ${i.risk?'risk':i.good?'goodbox':''}"><b>${esc(i.title)}</b><p>${esc(i.text)}</p></div>`).join('')}
+function renderToday(){
+ const list=tasksForDate(TODAY),done=list.filter(t=>isDone(t.id,TODAY)).length;
+ $('#todoList').innerHTML=list.length
+  ?list.map(t=>`<div class="todo"><div class="check ${isDone(t.id,TODAY)?'done':''}" data-check="${t.id}">${isDone(t.id,TODAY)?'✓':''}</div><div class="todo-main"><b>${esc(t.title)}</b><span>${esc(taskPath(t).join(' → '))}｜${t.duration||0} 分鐘</span></div><span class="priority ${t.priority==='high'?'high':''}">${t.priority==='high'?'高':t.priority==='low'?'低':'一般'}</span></div>`).join('')
+  :'<div class="empty">今天沒有排定的具體實現方式。</div>';
+ $$('[data-check]').forEach(x=>x.onclick=()=>toggleDone(x.dataset.check,TODAY));
+ const hasDue=list.length>0;
+ const rate=hasDue?Math.round(done/list.length*100):null;
+ $('#todayRate').textContent=hasDue?rate+'%':'—';
+ $('#todayTrend').textContent=hasDue?`${done} / ${list.length} 已完成`:'今日無排定任務';
+ $('#todayRate').classList.toggle('rate-empty-v104',!hasDue);
+ $('#todayTrend').className='trend'+(hasDue&&rate<50?' warn':'')+(!hasDue?' rate-empty-v104':'')
+}
+function renderStats(){
+ const [s,e]=currentWeekBounds(),w=calcRate(s,e),p=futurePressureDetails(7);
+ const weekHasDue=w.due>0;
+ $('#weekRate').textContent=weekHasDue?w.rate+'%':'—';
+ $('#weekTrend').textContent=weekHasDue?`本週 ${w.done} / ${w.due} 次已完成`:'本週尚無應執行任務';
+ $('#weekRate').classList.toggle('rate-empty-v104',!weekHasDue);
+ $('#weekTrend').className='trend'+(!weekHasDue?' rate-empty-v104':'');
+ $('#activeSubgoals').textContent=activeSubgoals();
+ $('#pressure7').textContent=p.total;
+ $('#pressureTrend').textContent=`任務 ${p.tasks}＋期限 ${p.deadlines}＋事件 ${p.events}`;
+ $('#homeHigh').textContent=highOpportunityCount();
+ const highTrend=$('#homeHigh')?.parentElement?.querySelector('.trend');
+ if(highTrend)highTrend.textContent='適配度 ≥ 80%｜未截止、未略過、未轉計畫'
+}
+function renderAnalysis(){
+ const [s,e]=currentWeekBounds(),w=calcRate(s,e),today=tasksForDate(TODAY),td=today.filter(t=>isDone(t.id,TODAY)).length;
+ const tr=today.length?Math.round(td/today.length*100):null;
+ let items=[];
+ if(!today.length){
+  items.push({good:true,title:'今日無排定任務',text:'今天沒有應執行的第四層具體任務，因此不計入今日完成率。'});
+ }else if(tr<50){
+  items.push({risk:true,title:'今日執行偏低',text:`目前完成 ${td}/${today.length}，先處理高優先任務，避免未完成量帶到明天。`});
+ }else{
+  items.push({good:true,title:'今日節奏正常',text:`目前完成 ${td}/${today.length}，今日執行率 ${tr}%。`});
+ }
+ if(w.due===0){
+  items.push({title:'本週尚無完成率樣本',text:'本週截至今天沒有應執行任務，不以 100% 或 0% 評價本週執行率。'});
+ }else if(w.due>=4&&w.rate<65){
+  items.push({risk:true,title:'本週執行率需要修正',text:`本週完成 ${w.done}/${w.due} 次（${w.rate}%），建議縮減非核心活動並保留補做時段。`});
+ }
+ const high=DB.tasks.filter(t=>{
+  const b=taskBounds(t);
+  return t.priority==='high'&&between(TODAY,b.start,b.end)&&taskRate(t)<50;
+ });
+ if(high.length)items.push({risk:true,title:'高優先任務落後',text:`${high.slice(0,2).map(t=>t.subject+' '+taskRate(t)+'%').join('、')}。進度是由實際完成紀錄回推。`});
+ const near=activeOpportunities().filter(o=>{
+  const n=daysUntil(o.deadline);
+  return n>=0&&n<=7&&!DB.opportunityState.dismissed.includes(o.id)&&!DB.opportunityState.converted.includes(o.id);
+ });
+ if(near.length)items.push({title:'近期機會期限',text:`未來 7 日有 ${near.length} 個候選機會截止；只有本人確認後才會轉入正式計畫。`});
+ $('#analysisList').innerHTML=items.map(i=>`<div class="analysis-item ${i.risk?'risk':i.good?'goodbox':''}"><b>${esc(i.title)}</b><p>${esc(i.text)}</p></div>`).join('')
+}
 function upcomingItems(){let out=[];DB.goals.filter(g=>g.level===3&&g.startDate&&g.endDate).forEach(g=>{const s=daysUntil(g.startDate),e=daysUntil(g.endDate);if(s>=0&&s<=30)out.push({date:g.startDate,title:'子任務開始｜'+g.title,kind:'subgoal'});if(e>=0&&e<=30)out.push({date:g.endDate,title:'子任務截止｜'+g.title,kind:'deadline'})});DB.events.filter(e=>e.date>=TODAY).forEach(e=>out.push({date:e.date,title:e.title,kind:'personal'}));Object.entries(FIXED_EVENTS).forEach(([date,es])=>es.forEach(e=>{if(date>=TODAY)out.push({date,title:e.title,kind:e.kind})}));activeOpportunities().forEach(o=>{if(o.deadline>=TODAY&&!DB.opportunityState.dismissed.includes(o.id)&&!DB.opportunityState.converted.includes(o.id))out.push({date:o.deadline,title:'候選截止｜'+o.title,kind:'opp'})});return out.sort((a,b)=>a.date.localeCompare(b.date)).slice(0,8)}
 function renderUpcoming(){const list=upcomingItems();$('#upcomingList').innerHTML=list.length?list.map(x=>`<div class="todo"><div class="todo-main"><b>${esc(x.title)}</b><span>${x.date}｜剩餘 ${Math.max(0,daysUntil(x.date))} 天</span></div><span class="badge ${x.kind==='deadline'||x.kind==='opp'?'red':x.kind==='personal'?'gold':'blue'}">${x.kind==='personal'?'個人':x.kind==='opp'?'機會':'節點'}</span></div>`).join(''):'<div class="empty">目前沒有近期節點。</div>'}
 function renderGoals(){const q=$('#goalSearch').value.trim().toLowerCase();const roots=DB.goals.filter(g=>!g.parentId);$('#goalTree').innerHTML=roots.length?roots.map(goalHtml).join(''):'<div class="empty">尚未建立一年目標。</div>';bindGoalActions();if(q){$$('.goal-node').forEach(n=>{n.style.display=n.textContent.toLowerCase().includes(q)?'block':'none'});$$('.children').forEach(c=>c.classList.remove('hidden'))}}
@@ -1479,6 +1657,68 @@ runOpportunityMaintenance();renderAll();saveDB();initPWA();maybeAutoRefresh();co
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded',boot);
   else boot();
 
+  document.addEventListener('click',schedule,true);
+})();
+
+</script>
+
+<!-- CYSH HOME STATS UI V10.4 -->
+<script>
+/* CYSH HOME UI V10.4 */
+(() => {
+  'use strict';
+  let timer=0;
+
+  function qa(sel,root=document){return [...root.querySelectorAll(sel)]}
+  function exactText(text){
+    return qa('button,a,h1,h2,h3,h4,b,strong,span,div,p')
+      .filter(el=>el.children.length===0)
+      .find(el=>el.textContent.trim()===text)||null;
+  }
+  function cardOf(n){return n?.closest('.card')||n?.closest('.panel')||n?.parentElement||null}
+  function commonParent(nodes){
+    const xs=nodes.filter(Boolean);if(!xs.length)return null;
+    let cur=xs[0].parentElement;
+    while(cur&&!xs.every(n=>cur.contains(n)))cur=cur.parentElement;
+    return cur;
+  }
+  function polishActions(){
+    const manage=exactText('管理目標與計畫');
+    const calendar=exactText('查看行事曆');
+    const add=exactText('新增具體任務');
+    if(manage)manage.classList.add('home-action-v104','home-action-primary-v104');
+    if(calendar)calendar.classList.add('home-action-v104','home-action-secondary-v104');
+    if(add)add.classList.add('home-action-v104','home-action-tertiary-v104','home-action-wide-v104');
+    const p=commonParent([manage,calendar,add]);
+    if(p)p.classList.add('home-action-grid-v104');
+  }
+  function polishRhythm(){
+    const c=cardOf(exactText('穩定建立學測節奏'));
+    if(c)c.classList.add('home-rhythm-card-v104');
+  }
+  function polishStats(){
+    const labels=['今日執行率','本週執行率','進行中子任務','7 日壓力量','高適配機會'];
+    const cards=labels.map(t=>cardOf(exactText(t))).filter(Boolean);
+    cards.forEach((c,i)=>{
+      c.classList.add('home-stat-card-v104');
+      if(labels[i]==='高適配機會')c.classList.add('home-stat-wide-v104');
+    });
+    const p=commonParent(cards);
+    if(p)p.classList.add('home-stats-grid-v104');
+  }
+  function polishToday(){
+    const h=exactText('今日計畫執行');
+    const s=h?.closest('section')||h?.parentElement?.parentElement;
+    if(s)s.classList.add('home-today-section-v104');
+  }
+  function polish(){
+    timer=0;
+    polishActions();polishRhythm();polishStats();polishToday();
+  }
+  function schedule(){clearTimeout(timer);timer=setTimeout(polish,80)}
+  const mo=new MutationObserver(schedule);
+  function boot(){mo.observe(document.body,{childList:true,subtree:true});schedule()}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
   document.addEventListener('click',schedule,true);
 })();
 
