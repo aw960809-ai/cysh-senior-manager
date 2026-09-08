@@ -1,5 +1,6 @@
 /* CYSH AUTO UPDATE V3 */
-const CACHE_NAME='cysh-manager-v10.1-shell';
+/* CYSH AUTO UPDATE V3.1 FIRST-RUN FIX */
+const CACHE_NAME='cysh-manager-v10.1.2-shell';
 const SHELL=['./','./index.html','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png','./update-manager.js'];
 
 self.addEventListener('install',event=>{
@@ -56,7 +57,7 @@ self.addEventListener('fetch',event=>{
 self.addEventListener('message',event=>{
   if(event.data?.type==='SKIP_WAITING')self.skipWaiting();
   if(event.data?.type==='GET_VERSION'&&event.ports?.[0]){
-    event.ports[0].postMessage({version:'10.1-auto-update-v3'});
+    event.ports[0].postMessage({version:'10.1.2-auto-update-v3.1'});
   }
 });
 

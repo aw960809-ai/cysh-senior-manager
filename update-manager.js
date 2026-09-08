@@ -1,8 +1,9 @@
 /* CYSH AUTO UPDATE V3 */
+/* CYSH AUTO UPDATE V3.1 FIRST-RUN FIX */
 (() => {
   'use strict';
 
-  const VERSION = '3.0.0';
+  const VERSION = '3.1.0';
   const CHECK_EVERY_MS = 5 * 60 * 1000;
   const FOREGROUND_MIN_MS = 60 * 1000;
   const AUTO_APPLY_DELAY_MS = 1200;
@@ -20,6 +21,15 @@
 
   function q(id){ return document.getElementById(id); }
   function online(){ return navigator.onLine !== false; }
+
+  function runtimeBuild(){
+    try{
+      return typeof APP_BUILD !== 'undefined' ? String(APP_BUILD || '') : '';
+    }catch(_){
+      return '';
+    }
+  }
+
 
   function toastSafe(msg){
     try{
@@ -314,6 +324,31 @@
       }
 
       const current = currentSignature();
+
+
+      const remoteIndexForBuild = await fetchFreshText('./index.html');
+      const remoteBuild =
+        (remoteIndexForBuild.match(/const\s+APP_BUILD\s*=\s*['"]([^'"]+)['"]/)||[])[1] || '';
+      const currentBuild = runtimeBuild();
+
+      if(remoteBuild && currentBuild && remoteBuild !== currentBuild){
+        setUI(
+          'update',
+          autoApply && !manual
+            ? `執行版本 ${currentBuild} 落後於 ${remoteBuild}，正在自動更新…`
+            : `執行版本 ${currentBuild} 落後於 ${remoteBuild}，可以立即更新`
+        );
+        showBar();
+
+        if(autoApply && !manual){
+          setTimeout(() => applyLatest(false), AUTO_APPLY_DELAY_MS);
+        }else if(manual){
+          toastSafe('發現新版本，可以立即更新');
+        }
+
+        return true;
+      }
+
 
       if(!current){
         localStorage.setItem(KEY_SIG, sig);
