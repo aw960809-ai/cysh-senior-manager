@@ -102,7 +102,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1240px;margin:auto;padd
 <script>
 const SCHEMA_VERSION=11, STORE_KEY='cysh-senior-manager-v2';
 const SAFETY_BACKUP_KEY=STORE_KEY+'-safety-backup';
-const CYSH_PARSER_VERSION=5;
+const CYSH_PARSER_VERSION=6;
 const SOURCE_COOLDOWN_MS=10*60*1000, RATE_LIMIT_COOLDOWN_MS=20*60*1000;
 const REFRESH_TOTAL_TIMEOUT_MS=45*1000, SOURCE_TIMEOUT_MS={cysh:18*1000,youth:12*1000,moe:10*1000};
 const REFRESH_SLOW_HINT_MS=15*1000, REFRESH_DEEP_HINT_MS=30*1000;
@@ -408,13 +408,105 @@ async function parseCyshSource(source,text,options={}){
 }
 function parseMoeSource(source,text){const has=/獎學金/.test(text),diag={rawCount:has?1:0,identifiedCount:has?1:0};if(!has)return finalizeDiagnostics([],diag);const roc=(text.match(/(\d{3})學年度/)||[])[1],year=roc?Number(roc)+1911:Number(TODAY.slice(0,4)),deadline=extractDeadline(text,`${year}-08-01`);const title=roc?`教育部接受捐助獎學基金會${roc}學年度獎學金`:'教育部接受捐助獎學基金會獎學金';const item=normalizeOpportunity({type:'scholarship',title,org:'教育部接受捐助獎學基金會',region:'全國',deadline,amount:extractAmount(text),eligibility:extractEligibility(text),goal:'就學經濟支持／學業獎勵',reason:'由教育部獎學金公告資訊網自動更新；實際校內收件日仍需依嘉中公告。',url:source.url,sourceUrl:source.url,sourceId:source.id,sourceName:source.name,lastSeen:new Date().toISOString()});return finalizeDiagnostics([item],diag)}
 function parseYouthSource(source,text){
- const src=String(text||''),lines=src.split(/\n+/).map(cleanText).filter(Boolean),out=[];let malformed=0,excluded=0;
- const deadlineRe=/申請期限\s*[:：]?\s*(20\d{2})[.\/-](\d{1,2})[.\/-](\d{1,2})\s*(?:[-–—~～至]\s*(20\d{2})[.\/-](\d{1,2})[.\/-](\d{1,2}))?/g;
- const matches=[...src.matchAll(deadlineRe)];
- for(const dm of matches){const deadline=toISODate(dm[4]||dm[1],dm[5]||dm[2],dm[6]||dm[3]);if(!deadline){malformed++;continue}const before=src.slice(Math.max(0,dm.index-650),dm.index),prev=before.split(/\n+/).map(cleanText).filter(x=>x&&!/^\d+$/.test(x)&&x!=='Image'&&!/^顯示\d*筆/.test(x)&&!/^字級/.test(x)&&!/^申請期限/.test(x));let title='',org='';for(let i=prev.length-1;i>=0;i--){const v=prev[i];if(/獎補助金|競賽|活動|平台|津貼|貸款|不限制/.test(v)&&v.length<30)continue;if(!org){org=v;continue}if(!title){title=v;break}}if(!title){malformed++;continue}if(EXCLUDE_WORDS.test(title)){excluded++;continue}const context=[title,org].join(' '),type=inferType(context)||'activity';out.push(normalizeOpportunity({type,title,org:org||'教育部青年發展署',region:inferRegion(context),deadline,eligibility:'青年資源；請開啟來源確認年齡與身分限制',goal:inferGoal(context,type),reason:'由青年發展署青年第一讚自動取得，申請期限由列表直接解析。',url:source.url,sourceUrl:source.url,sourceId:source.id,sourceName:source.name,lastSeen:new Date().toISOString()}))}
- if(!out.length){const links=extractMarkdownPosts(text).filter(p=>!EXCLUDE_WORDS.test(p.title)&&inferType(p.title)).slice(0,10);for(const p of links){const type=inferType(p.title)||'activity';out.push(normalizeOpportunity({type,title:p.title,org:'教育部青年發展署',region:inferRegion(p.title),deadline:extractDeadline(p.title,TODAY),eligibility:'青年資源；資格與申請期限待開啟官方來源確認',goal:inferGoal(p.title,type),reason:'由青年發展署公開頁面備援辨識；若無期限則列待確認。',url:p.url,sourceUrl:p.url,sourceId:source.id,sourceName:source.name,lastSeen:new Date().toISOString()}))}}
- const raw=(src.match(/申請期限\s*[:：]?/g)||[]).length||extractMarkdownPosts(text).length;return finalizeDiagnostics(out,{rawCount:raw,identifiedCount:out.length,excludedKeyword:excluded,parseErrors:malformed,deadlineParsed:out.filter(x=>x.deadline).length})
+const src=String(text||''),out=[],seen=new Set();
+let malformed=0,excluded=0;
+
+const youthClean=s=>cleanText(
+String(s||'')
+.replace(/!\[[^\]]*\]\([^)]+\)/g,' ')
+.replace(/\[([^\]]+)\]\([^)]+\)/g,' $1 ')
+.replace(/https?:\/\/\S+/g,' ')
+.replace(/\bImage(?:\s*\d+)?\b/gi,' ')
+.replace(/^\s*\d{1,2}\s+(?=\S)/,' ')
+);
+
+const deadlineRe=/申請期限\s*[:：]?\s*(20\d{2})[.\/-](\d{1,2})[.\/-](\d{1,2})\s*(?:[-~～至]\s*(20\d{2})[.\/-](\d{1,2})[.\/-](\d{1,2}))?/g;
+const matches=[...src.matchAll(deadlineRe)];
+
+for(const dm of matches){
+const deadline=dateLineToISODate(dm[4]||dm[1],dm[5]||dm[2],dm[6]||dm[3]);
+if(!deadline){malformed++;continue}
+
+const before=src.slice(Math.max(0,dm.index-1200),dm.index);
+const rawLinks=[...before.matchAll(/\[([^\]\n]{3,220})\]\(([^)\s]+)\)/g)]
+.filter(m=>{
+const prev=m.index>0?before[m.index-1]:'';
+const u=String(m[2]||'');
+return prev!=='!' &&
+!/\.(?:png|jpe?g|gif|webp|svg)(?:\?|$)/i.test(u) &&
+!/\/assets\/fallback|\/media\/doc/i.test(u);
+});
+
+let title='',org='',url=source.url;
+
+if(rawLinks.length){
+const lm=rawLinks[rawLinks.length-1];
+title=youthClean(lm[1]);
+url=absoluteSourceUrl(lm[2],source.url)||source.url;
+
+const tail=before.slice((lm.index||0)+lm[0].length);
+const orgCandidates=tail.split(/\n+/)
+.map(youthClean)
+.filter(v=>v &&
+v.length<=120 &&
+!/^(?:0|字級|顯示\d*筆|前往專案網站)$/i.test(v));
+
+if(orgCandidates.length)org=orgCandidates[orgCandidates.length-1];
 }
+
+if(!title){
+const prev=before.split(/\n+/)
+.map(youthClean)
+.filter(v=>v &&
+v.length<=220 &&
+!/^(?:0|字級|顯示\d*筆|申請期限)$/i.test(v));
+
+for(let i=prev.length-1;i>=0;i--){
+const v=prev[i];
+if(!org){org=v;continue}
+if(!title){title=v;break}
+}
+}
+
+if(!title){malformed++;continue}
+if(EXCLUDE_WORDS.test(title)){excluded++;continue}
+
+org=youthClean(org);
+if(!org || org===title)org='待確認';
+
+const key=title+'|'+deadline;
+if(seen.has(key))continue;
+seen.add(key);
+
+const context=[title,org].join(' ');
+const type=inferType(context)||'activity';
+
+out.push(normalizeOpportunity({
+type,
+title,
+org,
+region:inferRegion(context),
+deadline,
+eligibility:'青年資源；資格與申請期限待開啟官方來源確認',
+goal:inferGoal(context,type),
+reason:'由青年第一讚公開來源擷取；申請期限已解析，其他資格依官方頁面為準。',
+url,
+sourceUrl:url,
+sourceId:source.id,
+sourceName:source.name,
+lastSeen:new Date().toISOString()
+}));
+}
+
+return finalizeDiagnostics(out,{
+rawCount:matches.length,
+identifiedCount:out.length,
+excludedKeyword:excluded,
+parseErrors:malformed,
+deadlineParsed:out.filter(x=>x.deadline).length
+})
+}
+
 async function pullSource(source,options={}){const started=Date.now();try{const remaining=Math.max(5000,(Number(options.stopAt)||Infinity)-Date.now()),topTimeout=Math.min(15000,Number.isFinite(remaining)?remaining:15000);const text=await fetchReaderRetry(source.url,topTimeout,source.parser==='youth'?2:3);const parsed=source.parser==='cysh'?await parseCyshSource(source,text,options):source.parser==='moe'?parseMoeSource(source,text):parseYouthSource(source,text);const items=(parsed.items||[]).filter(o=>o.title&&o.type);const diagnostics={...(parsed.diagnostics||{}),finalCount:items.length};return{ok:true,source,items,diagnostics,ms:Date.now()-started}}catch(error){return{ok:false,rateLimited:isRateLimitError(error),source,items:[],diagnostics:{rawCount:0,identifiedCount:0,eligibilityPass:0,eligibilityReview:0,eligibilityRejected:0,unexpiredCount:0,expiredCount:0,noDeadlineCount:0,finalCount:0,excludedKeyword:0,notOpportunity:0,parseErrors:1},error:String(error?.message||error),ms:Date.now()-started}}}
 function guardedPullSource(source,options={}){const maxMs=Math.max(5000,Math.min(SOURCE_TIMEOUT_MS[source.parser]||30000,(Number(options.stopAt)||Date.now()+60000)-Date.now()));return Promise.race([pullSource(source,options),new Promise(resolve=>setTimeout(()=>resolve({ok:false,timeout:true,source,items:[],diagnostics:{rawCount:0,identifiedCount:0,eligibilityPass:0,eligibilityReview:0,eligibilityRejected:0,unexpiredCount:0,expiredCount:0,noDeadlineCount:0,finalCount:0,excludedKeyword:0,notOpportunity:0,parseErrors:1},error:`來源處理逾時（>${Math.round(maxMs/1000)}秒）`,ms:maxMs}),maxMs))])}
 function sourceRecentlyAttempted(id,windowMs=SOURCE_COOLDOWN_MS){const st=DB.sourceState?.[id],t=st?.lastAttempt?Date.parse(st.lastAttempt):0;return !!t&&Date.now()-t<windowMs}
