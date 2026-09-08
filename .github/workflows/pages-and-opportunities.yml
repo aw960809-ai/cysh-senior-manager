@@ -65,7 +65,7 @@ jobs:
           cp index.html _site/index.html
           cp manifest.webmanifest _site/manifest.webmanifest
           cp sw.js _site/sw.js
-      cp update-manager.js _site/update-manager.js
+          cp update-manager.js _site/update-manager.js
           cp icons/icon-192.png _site/icons/icon-192.png
           cp icons/icon-512.png _site/icons/icon-512.png
           cp data/opportunities.json _site/data/opportunities.json
